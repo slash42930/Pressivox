@@ -728,6 +728,12 @@
       return els.baseUrl.value.trim();
     }
 
+    function getApiBaseUrl() {
+      const raw = getBaseUrl().replace(/\/+$/, "");
+      if (!raw) return raw;
+      return raw.endsWith("/api/v1") ? raw : `${raw}/api/v1`;
+    }
+
     function setStatus(message) {
       els.dashboardStatusLog.textContent = message;
     }
@@ -830,7 +836,7 @@
     function updateConfigView(sourceOverride = null) {
       els.baseUrl.value = getBaseUrl();
       els.configSource.textContent = sourceOverride || AppConfig.configSource;
-      els.configBaseUrl.textContent = getBaseUrl();
+      els.configBaseUrl.textContent = getApiBaseUrl() || getBaseUrl();
     }
 
     function updateApiStatus(healthy, message = "") {
@@ -862,7 +868,8 @@
       };
       if (body) options.body = JSON.stringify(body);
 
-      const response = await fetch(`${getBaseUrl()}${path}`, options);
+      const apiBaseUrl = getApiBaseUrl();
+      const response = await fetch(`${apiBaseUrl}${path}`, options);
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
