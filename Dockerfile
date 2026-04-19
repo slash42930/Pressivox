@@ -1,4 +1,4 @@
-FROM cgr.dev/chainguard/python:3.13-dev AS builder
+FROM python:3.11-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 
 COPY app ./app
 
-FROM cgr.dev/chainguard/python:3.13
+FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
