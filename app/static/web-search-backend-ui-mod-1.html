@@ -39,27 +39,15 @@
           </div>
         </div>
 
-        <div class="w-full xl:w-[520px] rounded-3xl bg-slate-900 border border-slate-800 p-4">
+        <div class="w-full xl:w-[360px] rounded-3xl bg-slate-900 border border-slate-800 p-4">
           <div class="flex items-center justify-between gap-4 mb-3">
-            <label for="baseUrl" class="text-sm text-slate-300 font-medium">API Base URL</label>
+            <div class="text-sm text-slate-300 font-medium">Backend status</div>
             <span id="apiStatusBadge" class="text-xs px-3 py-1 rounded-full border border-slate-700 text-slate-400">Not checked</span>
           </div>
-          <div class="flex flex-col sm:flex-row gap-2">
-            <input
-              id="baseUrl"
-              class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3 outline-none focus:ring-2 focus:ring-cyan-500"
-              value="http://127.0.0.1:8000/api/v1"
-            />
-            <button id="saveBaseUrl" class="rounded-2xl bg-cyan-600 hover:bg-cyan-500 px-4 py-3 font-medium">
-              Save
-            </button>
-            <button id="pingApiBtn" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">
-              Ping
-            </button>
-          </div>
-          <p class="text-xs text-slate-500 mt-3">
-            Supports runtime override from <code>window.__APP_CONFIG__</code> or <code>?apiBaseUrl=...</code>.
-          </p>
+          <button id="pingApiBtn" class="w-full rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">
+            Ping API
+          </button>
+          <p class="text-xs text-slate-500 mt-3">API endpoint is managed internally for this deployment.</p>
         </div>
       </div>
     </header>
@@ -151,22 +139,12 @@
               <h2 class="text-xl font-semibold mb-4">Runtime config</h2>
               <div class="space-y-3 text-sm">
                 <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400 mb-1">Config source</div>
-                  <div id="configSource" class="text-slate-200">default</div>
+                  <div class="text-slate-400 mb-1">API mode</div>
+                  <div class="text-slate-200">Fixed production endpoint</div>
                 </div>
                 <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400 mb-1">Current API base</div>
-                  <div id="configBaseUrl" class="text-slate-200 break-all">-</div>
-                </div>
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400 mb-1">Deployment idea</div>
-                  <div class="text-slate-300">
-                    Serve this file statically and inject:
-                    <pre class="mt-2 text-xs bg-slate-900 rounded-xl p-3 overflow-auto">window.__APP_CONFIG__ = {
-  apiBaseUrl: "https://your-api.example.com/api/v1",
-  appName: "Web Search Workspace"
-};</pre>
-                  </div>
+                  <div class="text-slate-400 mb-1">Active backend</div>
+                  <div class="text-slate-200 break-all">https://pressivox.onrender.com/api/v1</div>
                 </div>
               </div>
             </div>
@@ -622,28 +600,11 @@
   </div>
 
   <script>
-    window.__APP_CONFIG__ = window.__APP_CONFIG__ || {};
-
     const AppConfig = (() => {
-      const queryParams = new URLSearchParams(window.location.search);
-      const runtimeConfig = window.__APP_CONFIG__ || {};
-      const savedBaseUrl = localStorage.getItem("wsw_api_base_url");
-
-      const apiBaseUrl =
-        queryParams.get("apiBaseUrl") ||
-        runtimeConfig.apiBaseUrl ||
-        savedBaseUrl ||
-        "http://127.0.0.1:8000/api/v1";
-
-      let source = "default";
-      if (queryParams.get("apiBaseUrl")) source = "query-param";
-      else if (runtimeConfig.apiBaseUrl) source = "window.__APP_CONFIG__";
-      else if (savedBaseUrl) source = "localStorage";
-
       return {
-        apiBaseUrl,
-        appName: runtimeConfig.appName || "Web Search Workspace",
-        configSource: source,
+        apiBaseUrl: "https://pressivox.onrender.com/api/v1",
+        appName: "Web Search Workspace",
+        configSource: "fixed-production",
       };
     })();
 
@@ -654,8 +615,6 @@
     };
 
     const els = {
-      baseUrl: document.getElementById("baseUrl"),
-      saveBaseUrl: document.getElementById("saveBaseUrl"),
       pingApiBtn: document.getElementById("pingApiBtn"),
       apiStatusBadge: document.getElementById("apiStatusBadge"),
 
@@ -665,8 +624,6 @@
       dashboardSelectedSources: document.getElementById("dashboardSelectedSources"),
       dashboardAmbiguous: document.getElementById("dashboardAmbiguous"),
       dashboardStatusLog: document.getElementById("dashboardStatusLog"),
-      configSource: document.getElementById("configSource"),
-      configBaseUrl: document.getElementById("configBaseUrl"),
 
       searchBtn: document.getElementById("searchBtn"),
       searchWikipediaPreset: document.getElementById("searchWikipediaPreset"),
@@ -725,7 +682,7 @@
     };
 
     function getBaseUrl() {
-      return els.baseUrl.value.trim();
+      return AppConfig.apiBaseUrl;
     }
 
     function getApiBaseUrl() {
@@ -827,16 +784,8 @@
       }
     }
 
-    function saveBaseUrl() {
-      localStorage.setItem("wsw_api_base_url", getBaseUrl());
-      updateConfigView("localStorage");
-      setStatus("Saved API base URL.");
-    }
-
-    function updateConfigView(sourceOverride = null) {
-      els.baseUrl.value = getBaseUrl();
-      els.configSource.textContent = sourceOverride || AppConfig.configSource;
-      els.configBaseUrl.textContent = getApiBaseUrl() || getBaseUrl();
+    function updateConfigView() {
+      // API base is intentionally fixed for production deployment.
     }
 
     function updateApiStatus(healthy, message = "") {
@@ -1483,7 +1432,6 @@
     }
 
     function wireActionButtons() {
-      els.saveBaseUrl.addEventListener("click", saveBaseUrl);
       els.pingApiBtn.addEventListener("click", pingApi);
       els.dashboardPingBtn.addEventListener("click", pingApi);
 
@@ -1580,8 +1528,7 @@
 
     function init() {
       document.title = AppConfig.appName;
-      els.baseUrl.value = AppConfig.apiBaseUrl;
-      updateConfigView(AppConfig.configSource);
+      updateConfigView();
 
       wireTabButtons();
       wirePresetButtons();
