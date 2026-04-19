@@ -18,7 +18,8 @@ docker run -p 8000:8000 --env-file .env pressivox
 
 - Health endpoint: `GET /api/v1/health`
 - UI endpoint: `/static/web-search-backend-ui-mod-1.html`
-- Run tests locally: `pytest -q`
+- Run test suite: `pytest -q`
+- Compile check: `python -m compileall app`
 
 ## 4. Cloud Deployment (Render/Railway/Fly)
 

@@ -20,6 +20,7 @@ This repository focuses on secure defaults for API usage, deployment, and secret
 
 ## Operational Practices
 
-- Run tests before every release: `pytest -q`
+- Run tests before every deployment: `pytest -q`
+- Run compile smoke check: `python -m compileall app`
 - Review dependency updates routinely.
 - Prefer least-privilege deployment credentials.
