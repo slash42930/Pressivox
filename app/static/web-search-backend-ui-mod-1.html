@@ -186,15 +186,6 @@
                     <label for="searchExcludeDomains" class="block text-sm text-slate-300 mb-2">Exclude Domains</label>
                     <input id="searchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="example.com" />
                   </div>
-                  <div class="xl:col-span-3">
-                    <label for="searchTrustedSites" class="block text-sm text-slate-300 mb-2">Include Sites (Topic Top 10)</label>
-                    <select id="searchTrustedSites" multiple size="8" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-3 py-3"></select>
-                    <p class="text-xs text-slate-500 mt-2">Sites update automatically from topic or query intent. You can also manually add selected sites.</p>
-                    <div class="flex flex-wrap gap-2 mt-3">
-                      <button id="searchAddTrustedSitesBtn" type="button" class="rounded-xl bg-cyan-700 hover:bg-cyan-600 px-3 py-2 text-sm font-medium">Add Selected Sites</button>
-                      <button id="searchClearTrustedSitesBtn" type="button" class="rounded-xl bg-slate-700 hover:bg-slate-600 px-3 py-2 text-sm font-medium">Clear Selected Sites</button>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -298,15 +289,6 @@
                   <div>
                     <label for="researchExcludeDomains" class="block text-sm text-slate-300 mb-2">Exclude Domains</label>
                     <input id="researchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
-                  </div>
-                  <div class="xl:col-span-3">
-                    <label for="researchTrustedSites" class="block text-sm text-slate-300 mb-2">Include Sites (Topic Top 10)</label>
-                    <select id="researchTrustedSites" multiple size="8" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-3 py-3"></select>
-                    <p class="text-xs text-slate-500 mt-2">Sites update automatically from topic or query intent. You can also manually add selected sites.</p>
-                    <div class="flex flex-wrap gap-2 mt-3">
-                      <button id="researchAddTrustedSitesBtn" type="button" class="rounded-xl bg-fuchsia-700 hover:bg-fuchsia-600 px-3 py-2 text-sm font-medium">Add Selected Sites</button>
-                      <button id="researchClearTrustedSitesBtn" type="button" class="rounded-xl bg-slate-700 hover:bg-slate-600 px-3 py-2 text-sm font-medium">Clear Selected Sites</button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -653,9 +635,6 @@
       searchBtn: document.getElementById("searchBtn"),
       searchWikipediaPreset: document.getElementById("searchWikipediaPreset"),
       searchNewsPreset: document.getElementById("searchNewsPreset"),
-      searchTrustedSites: document.getElementById("searchTrustedSites"),
-      searchAddTrustedSitesBtn: document.getElementById("searchAddTrustedSitesBtn"),
-      searchClearTrustedSitesBtn: document.getElementById("searchClearTrustedSitesBtn"),
       searchCards: document.getElementById("searchCards"),
       searchMeta: document.getElementById("searchMeta"),
       searchSummaryBox: document.getElementById("searchSummaryBox"),
@@ -663,9 +642,6 @@
       researchBtn: document.getElementById("researchBtn"),
       researchAIPreset: document.getElementById("researchAIPreset"),
       researchAmbiguousPreset: document.getElementById("researchAmbiguousPreset"),
-      researchTrustedSites: document.getElementById("researchTrustedSites"),
-      researchAddTrustedSitesBtn: document.getElementById("researchAddTrustedSitesBtn"),
-      researchClearTrustedSitesBtn: document.getElementById("researchClearTrustedSitesBtn"),
       researchSummary: document.getElementById("researchSummary"),
       researchTopMeta: document.getElementById("researchTopMeta"),
       researchAmbiguousBadge: document.getElementById("researchAmbiguousBadge"),
@@ -716,37 +692,19 @@
       return [...new Set(domains.map(d => d.trim().toLowerCase()).filter(Boolean))];
     }
 
-    function getSelectedDomains(selectEl) {
-      if (!selectEl) return [];
-      return Array.from(selectEl.selectedOptions).map(option => option.value);
-    }
+    function getEffectiveIncludeDomains(prefix) {
+      const includeEl = document.getElementById(`${prefix}IncludeDomains`);
+      const topicEl = document.getElementById(`${prefix}Topic`);
+      const queryEl = document.getElementById(`${prefix}Query`);
 
-    function setSelectedTrustedSites(selectEl, domains) {
-      if (!selectEl) return;
-      const wanted = new Set(uniqueDomains(domains));
-      Array.from(selectEl.options).forEach(option => {
-        option.selected = wanted.has(option.value);
-      });
-    }
+      const manual = parseDomains(includeEl?.value || "");
+      if (manual.length > 0) {
+        return uniqueDomains(manual);
+      }
 
-    function mergeIncludeDomains(inputId, selectEl) {
-      const inputEl = document.getElementById(inputId);
-      const manual = parseDomains(inputEl.value || "");
-      const selected = getSelectedDomains(selectEl);
-      return uniqueDomains([...manual, ...selected]);
-    }
-
-    function addSelectedTrustedSitesToInput(inputId, selectEl) {
-      const inputEl = document.getElementById(inputId);
-      const merged = mergeIncludeDomains(inputId, selectEl);
-      inputEl.value = merged.join(",");
-    }
-
-    function clearTrustedSiteSelection(selectEl) {
-      if (!selectEl) return;
-      Array.from(selectEl.options).forEach(option => {
-        option.selected = false;
-      });
+      const topic = topicEl?.value || "";
+      const query = queryEl?.value || "";
+      return getTrustedSitesForTopic(topic, query, 20);
     }
 
     function tokenizeContext(text = "") {
@@ -791,7 +749,7 @@
       return score;
     }
 
-    function getTrustedSitesForTopic(topic = "", query = "") {
+    function getTrustedSitesForTopic(topic = "", query = "", topN = 20) {
       const topicText = (topic || "").trim().toLowerCase();
       const queryText = (query || "").trim().toLowerCase();
       const terms = expandTerms(tokenizeContext(`${topicText} ${queryText}`));
@@ -804,36 +762,7 @@
       const strongMatches = ranked.filter(item => item.score > 1).map(item => item.domain);
       const fallback = TRUSTED_SITES.filter(domain => !strongMatches.includes(domain));
 
-      return [...strongMatches, ...fallback].slice(0, 10);
-    }
-
-    function populateTrustedSiteDropdown(selectEl, domains = TRUSTED_SITES) {
-      if (!selectEl) return;
-      selectEl.innerHTML = "";
-      domains.forEach(domain => {
-        const option = document.createElement("option");
-        option.value = domain;
-        option.textContent = domain;
-        selectEl.appendChild(option);
-      });
-    }
-
-    function applyTopicTrustedSites(prefix, autoFillInput = true) {
-      const topicEl = document.getElementById(`${prefix}Topic`);
-      const queryEl = document.getElementById(`${prefix}Query`);
-      const includeEl = document.getElementById(`${prefix}IncludeDomains`);
-      const selectEl = prefix === "search" ? els.searchTrustedSites : els.researchTrustedSites;
-
-      const topic = topicEl?.value || "";
-      const query = queryEl?.value || "";
-      const domains = getTrustedSitesForTopic(topic, query);
-
-      populateTrustedSiteDropdown(selectEl, domains);
-      setSelectedTrustedSites(selectEl, domains);
-
-      if (autoFillInput && includeEl) {
-        includeEl.value = domains.join(",");
-      }
+      return [...strongMatches, ...fallback].slice(0, topN);
     }
 
     function faviconHtml(item, sizeClass = "w-4 h-4") {
@@ -1175,7 +1104,7 @@
           max_results: Number(document.getElementById("searchMaxResults").value),
           summarize: true,
           extract_top_results: true,
-          include_domains: mergeIncludeDomains("searchIncludeDomains", els.searchTrustedSites),
+          include_domains: getEffectiveIncludeDomains("search"),
           exclude_domains: parseDomains(document.getElementById("searchExcludeDomains").value),
           ...buildTavilyOptions("search"),
         };
@@ -1207,7 +1136,7 @@
           max_results: Number(document.getElementById("researchMaxResults").value),
           summarize: true,
           extract_top_results: true,
-          include_domains: mergeIncludeDomains("researchIncludeDomains", els.researchTrustedSites),
+          include_domains: getEffectiveIncludeDomains("research"),
           exclude_domains: parseDomains(document.getElementById("researchExcludeDomains").value),
           ...buildTavilyOptions("research"),
         };
@@ -1358,7 +1287,6 @@
             document.getElementById("searchQuery").value = btn.dataset.query || "";
             document.getElementById("searchTopic").value = btn.dataset.topic || "general";
             document.getElementById("searchIncludeDomains").value = btn.dataset.include || "";
-            setSelectedTrustedSites(els.searchTrustedSites, parseDomains(btn.dataset.include || ""));
           }
 
           if (kind === "research") {
@@ -1366,7 +1294,6 @@
             document.getElementById("researchQuery").value = btn.dataset.query || "";
             document.getElementById("researchTopic").value = btn.dataset.topic || "general";
             document.getElementById("researchIncludeDomains").value = btn.dataset.include || "";
-            setSelectedTrustedSites(els.researchTrustedSites, parseDomains(btn.dataset.include || ""));
           }
 
           if (kind === "extract") {
@@ -1391,7 +1318,6 @@
         document.getElementById("searchTopic").value = "general";
         document.getElementById("searchMaxResults").value = "5";
         document.getElementById("searchIncludeDomains").value = "wikipedia.org";
-        setSelectedTrustedSites(els.searchTrustedSites, ["wikipedia.org"]);
         document.getElementById("searchExcludeDomains").value = "";
         document.getElementById("searchTimeRange").value = "";
         document.getElementById("searchMaxAgeDays").value = "0";
@@ -1404,7 +1330,6 @@
         document.getElementById("searchTopic").value = "news";
         document.getElementById("searchMaxResults").value = "5";
         document.getElementById("searchIncludeDomains").value = "reuters.com,bbc.com,apnews.com";
-        setSelectedTrustedSites(els.searchTrustedSites, ["reuters.com", "bbc.com", "apnews.com"]);
         document.getElementById("searchExcludeDomains").value = "";
         document.getElementById("searchTimeRange").value = "week";
         document.getElementById("searchMaxAgeDays").value = "7";
@@ -1417,7 +1342,6 @@
         document.getElementById("researchTopic").value = "general";
         document.getElementById("researchMaxResults").value = "5";
         document.getElementById("researchIncludeDomains").value = "wikipedia.org";
-        setSelectedTrustedSites(els.researchTrustedSites, ["wikipedia.org"]);
         document.getElementById("researchExcludeDomains").value = "";
         document.getElementById("researchTimeRange").value = "month";
         document.getElementById("researchMaxAgeDays").value = "30";
@@ -1430,7 +1354,6 @@
         document.getElementById("researchTopic").value = "general";
         document.getElementById("researchMaxResults").value = "5";
         document.getElementById("researchIncludeDomains").value = "wikipedia.org";
-        setSelectedTrustedSites(els.researchTrustedSites, ["wikipedia.org"]);
         document.getElementById("researchExcludeDomains").value = "";
         document.getElementById("researchTimeRange").value = "";
         document.getElementById("researchMaxAgeDays").value = "0";
@@ -1442,38 +1365,6 @@
         document.getElementById("extractUrl").value = "https://en.wikipedia.org/wiki/Artificial_intelligence";
       });
 
-      els.searchAddTrustedSitesBtn.addEventListener("click", () => {
-        addSelectedTrustedSitesToInput("searchIncludeDomains", els.searchTrustedSites);
-      });
-
-      els.searchClearTrustedSitesBtn.addEventListener("click", () => {
-        clearTrustedSiteSelection(els.searchTrustedSites);
-      });
-
-      els.researchAddTrustedSitesBtn.addEventListener("click", () => {
-        addSelectedTrustedSitesToInput("researchIncludeDomains", els.researchTrustedSites);
-      });
-
-      els.researchClearTrustedSitesBtn.addEventListener("click", () => {
-        clearTrustedSiteSelection(els.researchTrustedSites);
-      });
-
-      document.getElementById("searchTopic").addEventListener("change", () => {
-        applyTopicTrustedSites("search", true);
-      });
-
-      document.getElementById("researchTopic").addEventListener("change", () => {
-        applyTopicTrustedSites("research", true);
-      });
-
-      document.getElementById("searchQuery").addEventListener("blur", () => {
-        applyTopicTrustedSites("search", true);
-      });
-
-      document.getElementById("researchQuery").addEventListener("blur", () => {
-        applyTopicTrustedSites("research", true);
-      });
-
     }
 
     function init() {
@@ -1483,8 +1374,6 @@
       wireTabButtons();
       wirePresetButtons();
       wireActionButtons();
-      applyTopicTrustedSites("search", true);
-      applyTopicTrustedSites("research", true);
 
       activateTab("dashboard");
       updateApiStatus(null, "Connecting to backend...");
