@@ -1,7 +1,7 @@
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -21,10 +21,11 @@ router = APIRouter(prefix="/search", tags=["search"])
 async def search_web(
     payload: SearchRequest,
     db: Annotated[Session, Depends(get_db)],
+    session_id: Annotated[str | None, Header(alias="X-Session-Id")] = None,
 ) -> SearchResponse:
     try:
         service = SearchService(db)
-        data = await service.run_search(payload)
+        data = await service.run_search(payload, session_id=session_id)
         return SearchResponse(**data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -41,7 +42,8 @@ async def search_web(
 def get_search_history(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     db: Annotated[Session, Depends(get_db)] = None,
+    session_id: Annotated[str | None, Header(alias="X-Session-Id")] = None,
 ) -> list[SearchHistoryItem]:
     service = SearchService(db)
-    rows = service.list_history(limit=limit)
+    rows = service.list_history(limit=limit, session_id=session_id)
     return [SearchHistoryItem.model_validate(row) for row in rows]

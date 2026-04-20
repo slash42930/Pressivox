@@ -10,6 +10,7 @@ class SearchHistory(Base):
     __tablename__ = "search_history"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[str | None] = mapped_column(String(128), index=True, nullable=True)
     query: Mapped[str] = mapped_column(String(500), index=True)
     topic: Mapped[str] = mapped_column(String(50), default="general")
     provider: Mapped[str] = mapped_column(String(50), default="tavily")

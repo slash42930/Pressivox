@@ -1,7 +1,7 @@
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -23,6 +23,7 @@ router = APIRouter(prefix="/research", tags=["research"])
 async def run_research(
     payload: SearchRequest,
     db: Annotated[Session, Depends(get_db)],
+    session_id: Annotated[str | None, Header(alias="X-Session-Id")] = None,
 ) -> ResearchResponse:
     """Aggregated internal research flow combining search and extraction.
 
@@ -31,7 +32,7 @@ async def run_research(
     """
     try:
         service = SearchService(db)
-        result = await service.run_search(payload)
+        result = await service.run_search(payload, session_id=session_id)
 
         clean_results = [
             {

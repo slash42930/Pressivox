@@ -668,6 +668,18 @@
       return raw.endsWith("/api/v1") ? raw : `${raw}/api/v1`;
     }
 
+    function getClientSessionId() {
+      const key = "pressivox.session_id";
+      const existing = sessionStorage.getItem(key);
+      if (existing) return existing;
+
+      const created = (typeof crypto !== "undefined" && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      sessionStorage.setItem(key, created);
+      return created;
+    }
+
     function setStatus(message) {
       els.dashboardStatusLog.textContent = message;
     }
@@ -864,9 +876,13 @@
     }
 
     async function api(path, method = "GET", body = null) {
+      const sessionId = getClientSessionId();
       const options = {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Session-Id": sessionId,
+        },
       };
       if (body) options.body = JSON.stringify(body);
 

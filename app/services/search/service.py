@@ -101,7 +101,7 @@ class SearchService:
             for item in primary
         ]
 
-    async def run_search(self, request: SearchRequest) -> dict:
+    async def run_search(self, request: SearchRequest, session_id: str | None = None) -> dict:
         """Execute search and return results."""
         include_domains = request.include_domains or smart_select_domains(
             query=request.query,
@@ -210,15 +210,17 @@ class SearchService:
                     results,
                 )
 
-        history_row = SearchHistory(
-            query=request.query,
-            topic=request.topic,
-            provider=self.provider.name,
-            result_count=len(results),
-            answer=extracted_summary or summary,
-        )
-        self.db.add(history_row)
-        self.db.commit()
+        if session_id:
+            history_row = SearchHistory(
+                session_id=session_id,
+                query=request.query,
+                topic=request.topic,
+                provider=self.provider.name,
+                result_count=len(results),
+                answer=extracted_summary or summary,
+            )
+            self.db.add(history_row)
+            self.db.commit()
 
         return {
             "query": request.query,
@@ -239,10 +241,14 @@ class SearchService:
             "meaning_groups": meaning_groups,
         }
 
-    def list_history(self, limit: int = 20) -> list[SearchHistory]:
+    def list_history(self, limit: int = 20, session_id: str | None = None) -> list[SearchHistory]:
         """List search history."""
+        if not session_id:
+            return []
+
         return (
             self.db.query(SearchHistory)
+            .filter(SearchHistory.session_id == session_id)
             .order_by(SearchHistory.created_at.desc())
             .limit(limit)
             .all()

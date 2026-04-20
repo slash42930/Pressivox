@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import inspect, text
 
 from app.api.routes.extract import router as extract_router
 from app.api.routes.health import router as health_router
@@ -18,6 +19,27 @@ from app.models.search import SearchHistory
 
 settings = get_settings()
 Base.metadata.create_all(bind=engine)
+
+
+def ensure_search_history_session_column() -> None:
+    """Add session_id to search_history for existing databases if missing."""
+    try:
+        inspector = inspect(engine)
+        if "search_history" not in inspector.get_table_names():
+            return
+
+        columns = {column["name"] for column in inspector.get_columns("search_history")}
+        if "session_id" in columns:
+            return
+
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE search_history ADD COLUMN session_id VARCHAR(128)"))
+    except Exception:
+        # Non-fatal schema upgrade path for local dev databases.
+        pass
+
+
+ensure_search_history_session_column()
 
 cors_origins = settings.cors_origins_list
 allow_credentials = "*" not in cors_origins
