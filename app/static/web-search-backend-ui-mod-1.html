@@ -162,6 +162,9 @@
                     <select id="searchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
                       <option value="general">general</option>
                       <option value="news" selected>news</option>
+                      <option value="football">football</option>
+                      <option value="animals">animals</option>
+                      <option value="economy">economy</option>
                       <option value="finance">finance</option>
                     </select>
                   </div>
@@ -184,9 +187,9 @@
                     <input id="searchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="example.com" />
                   </div>
                   <div class="xl:col-span-3">
-                    <label for="searchTrustedSites" class="block text-sm text-slate-300 mb-2">Include Sites (Trusted Top 50)</label>
+                    <label for="searchTrustedSites" class="block text-sm text-slate-300 mb-2">Include Sites (Topic Top 10)</label>
                     <select id="searchTrustedSites" multiple size="8" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-3 py-3"></select>
-                    <p class="text-xs text-slate-500 mt-2">Select one or more sites, then add them to include domains.</p>
+                    <p class="text-xs text-slate-500 mt-2">Sites update automatically from topic or query intent. You can also manually add selected sites.</p>
                     <div class="flex flex-wrap gap-2 mt-3">
                       <button id="searchAddTrustedSitesBtn" type="button" class="rounded-xl bg-cyan-700 hover:bg-cyan-600 px-3 py-2 text-sm font-medium">Add Selected Sites</button>
                       <button id="searchClearTrustedSitesBtn" type="button" class="rounded-xl bg-slate-700 hover:bg-slate-600 px-3 py-2 text-sm font-medium">Clear Selected Sites</button>
@@ -272,6 +275,9 @@
                     <select id="researchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
                       <option value="general" selected>general</option>
                       <option value="news">news</option>
+                      <option value="football">football</option>
+                      <option value="animals">animals</option>
+                      <option value="economy">economy</option>
                       <option value="finance">finance</option>
                     </select>
                   </div>
@@ -294,9 +300,9 @@
                     <input id="researchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
                   </div>
                   <div class="xl:col-span-3">
-                    <label for="researchTrustedSites" class="block text-sm text-slate-300 mb-2">Include Sites (Trusted Top 50)</label>
+                    <label for="researchTrustedSites" class="block text-sm text-slate-300 mb-2">Include Sites (Topic Top 10)</label>
                     <select id="researchTrustedSites" multiple size="8" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-3 py-3"></select>
-                    <p class="text-xs text-slate-500 mt-2">Select one or more sites, then add them to include domains.</p>
+                    <p class="text-xs text-slate-500 mt-2">Sites update automatically from topic or query intent. You can also manually add selected sites.</p>
                     <div class="flex flex-wrap gap-2 mt-3">
                       <button id="researchAddTrustedSitesBtn" type="button" class="rounded-xl bg-fuchsia-700 hover:bg-fuchsia-600 px-3 py-2 text-sm font-medium">Add Selected Sites</button>
                       <button id="researchClearTrustedSitesBtn" type="button" class="rounded-xl bg-slate-700 hover:bg-slate-600 px-3 py-2 text-sm font-medium">Clear Selected Sites</button>
@@ -542,6 +548,98 @@
       "brookings.edu"
     ];
 
+    const DOMAIN_TAGS = {
+      "reuters.com": ["news", "world", "business", "economy", "markets", "politics", "technology"],
+      "apnews.com": ["news", "world", "politics", "sports", "business"],
+      "bbc.com": ["news", "world", "sports", "football", "science", "technology"],
+      "npr.org": ["news", "culture", "science", "health", "politics"],
+      "pbs.org": ["news", "education", "science", "nature"],
+      "wsj.com": ["business", "markets", "economy", "finance"],
+      "nytimes.com": ["news", "business", "science", "health", "sports"],
+      "washingtonpost.com": ["news", "politics", "world", "economy"],
+      "ft.com": ["finance", "markets", "economy", "business"],
+      "economist.com": ["economy", "business", "geopolitics", "science"],
+      "bloomberg.com": ["markets", "finance", "economy", "business", "technology"],
+      "cnbc.com": ["markets", "business", "economy", "finance"],
+      "forbes.com": ["business", "economy", "leadership", "technology"],
+      "time.com": ["news", "world", "politics", "health"],
+      "theguardian.com": ["news", "world", "environment", "sports"],
+      "thetimes.co.uk": ["news", "business", "world", "sports"],
+      "latimes.com": ["news", "world", "politics", "sports"],
+      "scmp.com": ["asia", "world", "economy", "business"],
+      "nikkei.com": ["asia", "economy", "markets", "business"],
+      "dw.com": ["world", "news", "europe", "economy"],
+      "france24.com": ["news", "world", "economy", "sports"],
+      "aljazeera.com": ["news", "world", "politics", "economy"],
+      "csmonitor.com": ["news", "world", "politics", "economy"],
+      "propublica.org": ["investigative", "policy", "justice", "politics"],
+      "nature.com": ["science", "research", "biology", "medicine"],
+      "science.org": ["science", "research", "biology", "technology"],
+      "scientificamerican.com": ["science", "biology", "space", "technology"],
+      "newscientist.com": ["science", "research", "technology", "health"],
+      "nejm.org": ["medicine", "health", "clinical", "research"],
+      "thelancet.com": ["medicine", "health", "publichealth", "research"],
+      "who.int": ["health", "publichealth", "disease", "medicine"],
+      "cdc.gov": ["health", "disease", "epidemiology", "publichealth"],
+      "un.org": ["policy", "development", "economy", "climate"],
+      "worldbank.org": ["economy", "development", "finance", "data"],
+      "imf.org": ["economy", "finance", "macroeconomics", "policy"],
+      "oecd.org": ["economy", "policy", "data", "education"],
+      "weforum.org": ["economy", "technology", "policy", "future"],
+      "wikipedia.org": ["reference", "general", "history", "science", "animals", "football"],
+      "britannica.com": ["reference", "general", "history", "animals", "science"],
+      "mit.edu": ["research", "engineering", "ai", "technology"],
+      "stanford.edu": ["research", "ai", "technology", "science"],
+      "harvard.edu": ["research", "medicine", "policy", "economics"],
+      "ox.ac.uk": ["research", "science", "medicine", "humanities"],
+      "cam.ac.uk": ["research", "science", "engineering", "medicine"],
+      "openai.com": ["ai", "technology", "research", "llm"],
+      "google.com": ["technology", "ai", "research", "cloud"],
+      "microsoft.com": ["technology", "ai", "cloud", "business"],
+      "ibm.com": ["technology", "ai", "enterprise", "research"],
+      "mckinsey.com": ["business", "economy", "strategy", "industry"],
+      "brookings.edu": ["policy", "economy", "geopolitics", "research"],
+
+      "fifa.com": ["football", "soccer", "worldcup", "sports"],
+      "uefa.com": ["football", "soccer", "championsleague", "sports"],
+      "premierleague.com": ["football", "soccer", "premierleague", "sports"],
+      "espn.com": ["sports", "football", "soccer", "basketball", "baseball"],
+      "skysports.com": ["sports", "football", "soccer", "tennis"],
+      "theathletic.com": ["sports", "football", "soccer", "analysis"],
+      "goal.com": ["football", "soccer", "transfers", "sports"],
+      "fourfourtwo.com": ["football", "soccer", "sports"],
+      "beinsports.com": ["sports", "football", "soccer", "broadcast"],
+
+      "nationalgeographic.com": ["animals", "wildlife", "nature", "conservation"],
+      "worldwildlife.org": ["animals", "wildlife", "conservation", "biodiversity"],
+      "iucn.org": ["wildlife", "conservation", "species", "environment"],
+      "animalplanet.com": ["animals", "pets", "wildlife"],
+      "fws.gov": ["wildlife", "species", "conservation", "habitat"],
+      "noaa.gov": ["marine", "wildlife", "climate", "ocean"],
+      "aspca.org": ["animals", "pets", "welfare", "rescue"],
+      "rspca.org.uk": ["animals", "pets", "welfare", "rescue"],
+      "smithsonianmag.com": ["animals", "science", "history", "culture"]
+    };
+
+    const TOKEN_ALIASES = {
+      football: ["soccer", "fifa", "uefa", "premierleague"],
+      soccer: ["football", "fifa", "uefa"],
+      animal: ["animals", "wildlife", "species", "fauna", "pets"],
+      animals: ["animal", "wildlife", "species", "fauna", "pets"],
+      economy: ["economic", "macroeconomics", "markets", "finance", "gdp", "inflation"],
+      economic: ["economy", "markets", "finance"],
+      finance: ["economy", "markets", "banking"],
+      ai: ["artificial", "intelligence", "llm", "machine", "learning"],
+      medicine: ["health", "clinical", "disease", "publichealth"],
+      climate: ["environment", "sustainability", "weather"],
+      market: ["markets", "economy", "finance"]
+    };
+
+    const STOPWORDS = new Set([
+      "the", "and", "for", "with", "from", "that", "this", "about", "into", "latest", "news",
+      "what", "when", "where", "which", "who", "how", "why", "vs", "top", "best", "new"
+    ]);
+
     const els = {
       pingApiBtn: document.getElementById("pingApiBtn"),
       apiStatusBadge: document.getElementById("apiStatusBadge"),
@@ -651,15 +749,91 @@
       });
     }
 
-    function populateTrustedSiteDropdown(selectEl) {
+    function tokenizeContext(text = "") {
+      return (text || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, " ")
+        .split(/\s+/)
+        .map(token => token.trim())
+        .filter(token => token.length > 2 && !STOPWORDS.has(token));
+    }
+
+    function expandTerms(tokens = []) {
+      const expanded = new Set(tokens);
+      tokens.forEach(token => {
+        const aliases = TOKEN_ALIASES[token] || [];
+        aliases.forEach(alias => expanded.add(alias));
+      });
+      return [...expanded];
+    }
+
+    function scoreDomainForTerms(domain, terms) {
+      const tags = DOMAIN_TAGS[domain] || [];
+      const domainToken = domain.replace(/\.[a-z.]+$/, "").toLowerCase();
+      let score = TRUSTED_SITES.includes(domain) ? 1 : 0;
+
+      terms.forEach(term => {
+        if (!term) return;
+        if (tags.includes(term)) {
+          score += 8;
+          return;
+        }
+
+        if (tags.some(tag => tag.includes(term) || term.includes(tag))) {
+          score += 3;
+        }
+
+        if (domain.includes(term) || domainToken.includes(term)) {
+          score += 2;
+        }
+      });
+
+      return score;
+    }
+
+    function getTrustedSitesForTopic(topic = "", query = "") {
+      const topicText = (topic || "").trim().toLowerCase();
+      const queryText = (query || "").trim().toLowerCase();
+      const terms = expandTerms(tokenizeContext(`${topicText} ${queryText}`));
+
+      const candidates = uniqueDomains([...TRUSTED_SITES, ...Object.keys(DOMAIN_TAGS)]);
+      const ranked = candidates
+        .map(domain => ({ domain, score: scoreDomainForTerms(domain, terms) }))
+        .sort((a, b) => b.score - a.score || a.domain.localeCompare(b.domain));
+
+      const strongMatches = ranked.filter(item => item.score > 1).map(item => item.domain);
+      const fallback = TRUSTED_SITES.filter(domain => !strongMatches.includes(domain));
+
+      return [...strongMatches, ...fallback].slice(0, 10);
+    }
+
+    function populateTrustedSiteDropdown(selectEl, domains = TRUSTED_SITES) {
       if (!selectEl) return;
       selectEl.innerHTML = "";
-      TRUSTED_SITES.forEach(domain => {
+      domains.forEach(domain => {
         const option = document.createElement("option");
         option.value = domain;
         option.textContent = domain;
         selectEl.appendChild(option);
       });
+    }
+
+    function applyTopicTrustedSites(prefix, autoFillInput = true) {
+      const topicEl = document.getElementById(`${prefix}Topic`);
+      const queryEl = document.getElementById(`${prefix}Query`);
+      const includeEl = document.getElementById(`${prefix}IncludeDomains`);
+      const selectEl = prefix === "search" ? els.searchTrustedSites : els.researchTrustedSites;
+
+      const topic = topicEl?.value || "";
+      const query = queryEl?.value || "";
+      const domains = getTrustedSitesForTopic(topic, query);
+
+      populateTrustedSiteDropdown(selectEl, domains);
+      setSelectedTrustedSites(selectEl, domains);
+
+      if (autoFillInput && includeEl) {
+        includeEl.value = domains.join(",");
+      }
     }
 
     function faviconHtml(item, sizeClass = "w-4 h-4") {
@@ -1284,6 +1458,22 @@
         clearTrustedSiteSelection(els.researchTrustedSites);
       });
 
+      document.getElementById("searchTopic").addEventListener("change", () => {
+        applyTopicTrustedSites("search", true);
+      });
+
+      document.getElementById("researchTopic").addEventListener("change", () => {
+        applyTopicTrustedSites("research", true);
+      });
+
+      document.getElementById("searchQuery").addEventListener("blur", () => {
+        applyTopicTrustedSites("search", true);
+      });
+
+      document.getElementById("researchQuery").addEventListener("blur", () => {
+        applyTopicTrustedSites("research", true);
+      });
+
     }
 
     function init() {
@@ -1293,10 +1483,8 @@
       wireTabButtons();
       wirePresetButtons();
       wireActionButtons();
-      populateTrustedSiteDropdown(els.searchTrustedSites);
-      populateTrustedSiteDropdown(els.researchTrustedSites);
-      setSelectedTrustedSites(els.searchTrustedSites, parseDomains(document.getElementById("searchIncludeDomains").value));
-      setSelectedTrustedSites(els.researchTrustedSites, parseDomains(document.getElementById("researchIncludeDomains").value));
+      applyTopicTrustedSites("search", true);
+      applyTopicTrustedSites("research", true);
 
       activateTab("dashboard");
       updateApiStatus(null, "Connecting to backend...");
