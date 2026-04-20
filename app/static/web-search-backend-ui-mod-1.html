@@ -162,10 +162,6 @@
                     <select id="searchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
                       <option value="general">general</option>
                       <option value="news" selected>news</option>
-                      <option value="football">football</option>
-                      <option value="animals">animals</option>
-                      <option value="economy">economy</option>
-                      <option value="finance">finance</option>
                     </select>
                   </div>
                   <div>
@@ -266,10 +262,6 @@
                     <select id="researchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
                       <option value="general" selected>general</option>
                       <option value="news">news</option>
-                      <option value="football">football</option>
-                      <option value="animals">animals</option>
-                      <option value="economy">economy</option>
-                      <option value="finance">finance</option>
                     </select>
                   </div>
                   <div>
@@ -704,7 +696,7 @@
 
       const topic = topicEl?.value || "";
       const query = queryEl?.value || "";
-      return getTrustedSitesForTopic(topic, query, 20);
+      return getTrustedSitesForTopic(topic, query, 50);
     }
 
     function tokenizeContext(text = "") {
@@ -749,7 +741,7 @@
       return score;
     }
 
-    function getTrustedSitesForTopic(topic = "", query = "", topN = 20) {
+    function getTrustedSitesForTopic(topic = "", query = "", topN = 50) {
       const topicText = (topic || "").trim().toLowerCase();
       const queryText = (query || "").trim().toLowerCase();
       const terms = expandTerms(tokenizeContext(`${topicText} ${queryText}`));

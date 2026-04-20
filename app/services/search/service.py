@@ -21,6 +21,7 @@ from .result_filtering import (
     primary_results_for_extraction,
 )
 from .scoring import rerank_results
+from .scoring import smart_select_domains
 from .text_processing import query_terms
 
 
@@ -102,11 +103,17 @@ class SearchService:
 
     async def run_search(self, request: SearchRequest) -> dict:
         """Execute search and return results."""
+        include_domains = request.include_domains or smart_select_domains(
+            query=request.query,
+            topic=request.topic,
+            top_n=50,
+        )
+
         primary_payload = await self.provider.search(
             query=request.query,
             topic=request.topic,
             max_results=max(request.max_results, 8 if self._is_short_general_query(request) else request.max_results),
-            include_domains=request.include_domains,
+            include_domains=include_domains,
             exclude_domains=request.exclude_domains,
             search_depth=request.search_depth,
             include_answer=request.include_answer,
