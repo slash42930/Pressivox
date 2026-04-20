@@ -43,11 +43,9 @@
 
         <div class="w-full xl:w-[360px] rounded-3xl bg-slate-900/90 border border-slate-800 p-4 shadow-2xl shadow-cyan-950/30">
           <div class="flex items-center justify-between gap-4 mb-3">
-            <div class="text-sm text-slate-300 font-medium">Backend status</div>
+            <div class="text-sm text-slate-300 font-medium">Status</div>
             <span id="apiStatusBadge" class="text-xs px-3 py-1 rounded-full border border-slate-700 text-slate-400">Not checked</span>
           </div>
-          <p class="text-xs text-slate-400 mt-1">Connected automatically to the Pressivox production backend.</p>
-          <p class="text-xs text-slate-500 mt-2">No manual API setup required.</p>
         </div>
       </div>
     </header>
@@ -80,7 +78,7 @@
         <section id="tab-dashboard" class="tab-panel">
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             <div class="rounded-3xl bg-slate-900 border border-slate-800 p-5">
-              <div class="text-sm text-slate-400 mb-2">API status</div>
+              <div class="text-sm text-slate-400 mb-2">Status</div>
               <div id="dashboardApiStatus" class="text-2xl font-semibold">Unknown</div>
             </div>
             <div class="rounded-3xl bg-slate-900 border border-slate-800 p-5">
@@ -151,55 +149,78 @@
               <p class="text-slate-400">Explore search results in cards first, with JSON available separately.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div class="xl:col-span-2">
-                <label for="searchQuery" class="block text-sm text-slate-300 mb-2">Query</label>
-                <input id="searchQuery" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="latest AI news" />
+            <div class="space-y-4">
+              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold text-slate-200 mb-3">Query Settings</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div class="xl:col-span-2">
+                    <label for="searchQuery" class="block text-sm text-slate-300 mb-2">Query</label>
+                    <input id="searchQuery" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="latest AI news" />
+                  </div>
+                  <div>
+                    <label for="searchTopic" class="block text-sm text-slate-300 mb-2">Topic</label>
+                    <select id="searchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
+                      <option value="general">general</option>
+                      <option value="news" selected>news</option>
+                      <option value="finance">finance</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="searchMaxResults" class="block text-sm text-slate-300 mb-2">Max Results</label>
+                    <input id="searchMaxResults" type="number" min="1" max="20" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="5" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label for="searchTopic" class="block text-sm text-slate-300 mb-2">Topic</label>
-                <select id="searchTopic" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3">
-                  <option value="general">general</option>
-                  <option value="news" selected>news</option>
-                  <option value="finance">finance</option>
-                </select>
+
+              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold text-slate-200 mb-3">Source Filters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div class="xl:col-span-2">
+                    <label for="searchIncludeDomains" class="block text-sm text-slate-300 mb-2">Include Domains (manual)</label>
+                    <input id="searchIncludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="reuters.com,bbc.com" />
+                  </div>
+                  <div>
+                    <label for="searchExcludeDomains" class="block text-sm text-slate-300 mb-2">Exclude Domains</label>
+                    <input id="searchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="example.com" />
+                  </div>
+                  <div class="xl:col-span-3">
+                    <label for="searchTrustedSites" class="block text-sm text-slate-300 mb-2">Include Sites (Trusted Top 50)</label>
+                    <select id="searchTrustedSites" multiple size="8" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-3 py-3"></select>
+                    <p class="text-xs text-slate-500 mt-2">Select one or more sites, then add them to include domains.</p>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                      <button id="searchAddTrustedSitesBtn" type="button" class="rounded-xl bg-cyan-700 hover:bg-cyan-600 px-3 py-2 text-sm font-medium">Add Selected Sites</button>
+                      <button id="searchClearTrustedSitesBtn" type="button" class="rounded-xl bg-slate-700 hover:bg-slate-600 px-3 py-2 text-sm font-medium">Clear Selected Sites</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label for="searchMaxResults" class="block text-sm text-slate-300 mb-2">Max Results</label>
-                <input id="searchMaxResults" type="number" min="1" max="20" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="5" />
-              </div>
-              <div>
-                <label for="searchIncludeDomains" class="block text-sm text-slate-300 mb-2">Include Domains</label>
-                <input id="searchIncludeDomains" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" placeholder="reuters.com,bbc.com" />
-              </div>
-              <div>
-                <label for="searchExcludeDomains" class="block text-sm text-slate-300 mb-2">Exclude Domains</label>
-                <input id="searchExcludeDomains" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" placeholder="example.com" />
-              </div>
-              <div>
-                <label for="searchTimeRange" class="block text-sm text-slate-300 mb-2">Time Range</label>
-                <select id="searchTimeRange" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3">
-                  <option value="">none</option>
-                  <option value="day">day</option>
-                  <option value="week" selected>week</option>
-                  <option value="month">month</option>
-                  <option value="year">year</option>
-                </select>
-              </div>
-              <div>
-                <label for="searchMaxAgeDays" class="block text-sm text-slate-300 mb-2">Max News Age (days)</label>
-                <input id="searchMaxAgeDays" type="number" min="0" max="3650" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="7" />
-              </div>
-              <div>
-                <label for="searchStartDate" class="block text-sm text-slate-300 mb-2">Start Date</label>
-                <input id="searchStartDate" type="date" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" />
-              </div>
-              <div>
-                <label for="searchEndDate" class="block text-sm text-slate-300 mb-2">End Date</label>
-                <input id="searchEndDate" type="date" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" />
-              </div>
-              <div class="xl:col-span-3 text-xs text-slate-400 rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                Defaults always on: advanced depth, summarize, extract top, include answer, include raw content, include favicon.
+
+              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold text-slate-200 mb-3">Date Filters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                  <div>
+                    <label for="searchTimeRange" class="block text-sm text-slate-300 mb-2">Time Range</label>
+                    <select id="searchTimeRange" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
+                      <option value="">none</option>
+                      <option value="day">day</option>
+                      <option value="week" selected>week</option>
+                      <option value="month">month</option>
+                      <option value="year">year</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="searchMaxAgeDays" class="block text-sm text-slate-300 mb-2">Max News Age (days)</label>
+                    <input id="searchMaxAgeDays" type="number" min="0" max="3650" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="7" />
+                  </div>
+                  <div>
+                    <label for="searchStartDate" class="block text-sm text-slate-300 mb-2">Start Date</label>
+                    <input id="searchStartDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                  </div>
+                  <div>
+                    <label for="searchEndDate" class="block text-sm text-slate-300 mb-2">End Date</label>
+                    <input id="searchEndDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -238,55 +259,78 @@
               <p class="text-slate-400">Better overview for final answers, selected sources, and ambiguity groups.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div class="xl:col-span-2">
-                <label for="researchQuery" class="block text-sm text-slate-300 mb-2">Query</label>
-                <input id="researchQuery" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="artificial intelligence" />
+            <div class="space-y-4">
+              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold text-slate-200 mb-3">Query Settings</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div class="xl:col-span-2">
+                    <label for="researchQuery" class="block text-sm text-slate-300 mb-2">Query</label>
+                    <input id="researchQuery" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="artificial intelligence" />
+                  </div>
+                  <div>
+                    <label for="researchTopic" class="block text-sm text-slate-300 mb-2">Topic</label>
+                    <select id="researchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
+                      <option value="general" selected>general</option>
+                      <option value="news">news</option>
+                      <option value="finance">finance</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="researchMaxResults" class="block text-sm text-slate-300 mb-2">Max Results</label>
+                    <input id="researchMaxResults" type="number" min="1" max="20" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="5" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label for="researchTopic" class="block text-sm text-slate-300 mb-2">Topic</label>
-                <select id="researchTopic" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3">
-                  <option value="general" selected>general</option>
-                  <option value="news">news</option>
-                  <option value="finance">finance</option>
-                </select>
+
+              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold text-slate-200 mb-3">Source Filters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div class="xl:col-span-2">
+                    <label for="researchIncludeDomains" class="block text-sm text-slate-300 mb-2">Include Domains (manual)</label>
+                    <input id="researchIncludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="wikipedia.org" />
+                  </div>
+                  <div>
+                    <label for="researchExcludeDomains" class="block text-sm text-slate-300 mb-2">Exclude Domains</label>
+                    <input id="researchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                  </div>
+                  <div class="xl:col-span-3">
+                    <label for="researchTrustedSites" class="block text-sm text-slate-300 mb-2">Include Sites (Trusted Top 50)</label>
+                    <select id="researchTrustedSites" multiple size="8" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-3 py-3"></select>
+                    <p class="text-xs text-slate-500 mt-2">Select one or more sites, then add them to include domains.</p>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                      <button id="researchAddTrustedSitesBtn" type="button" class="rounded-xl bg-fuchsia-700 hover:bg-fuchsia-600 px-3 py-2 text-sm font-medium">Add Selected Sites</button>
+                      <button id="researchClearTrustedSitesBtn" type="button" class="rounded-xl bg-slate-700 hover:bg-slate-600 px-3 py-2 text-sm font-medium">Clear Selected Sites</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label for="researchMaxResults" class="block text-sm text-slate-300 mb-2">Max Results</label>
-                <input id="researchMaxResults" type="number" min="1" max="20" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="5" />
-              </div>
-              <div>
-                <label for="researchIncludeDomains" class="block text-sm text-slate-300 mb-2">Include Domains</label>
-                <input id="researchIncludeDomains" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="wikipedia.org" />
-              </div>
-              <div>
-                <label for="researchExcludeDomains" class="block text-sm text-slate-300 mb-2">Exclude Domains</label>
-                <input id="researchExcludeDomains" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" />
-              </div>
-              <div>
-                <label for="researchTimeRange" class="block text-sm text-slate-300 mb-2">Time Range</label>
-                <select id="researchTimeRange" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3">
-                  <option value="">none</option>
-                  <option value="day">day</option>
-                  <option value="week">week</option>
-                  <option value="month" selected>month</option>
-                  <option value="year">year</option>
-                </select>
-              </div>
-              <div>
-                <label for="researchMaxAgeDays" class="block text-sm text-slate-300 mb-2">Max News Age (days)</label>
-                <input id="researchMaxAgeDays" type="number" min="0" max="3650" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="30" />
-              </div>
-              <div>
-                <label for="researchStartDate" class="block text-sm text-slate-300 mb-2">Start Date</label>
-                <input id="researchStartDate" type="date" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" />
-              </div>
-              <div>
-                <label for="researchEndDate" class="block text-sm text-slate-300 mb-2">End Date</label>
-                <input id="researchEndDate" type="date" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" />
-              </div>
-              <div class="xl:col-span-3 text-xs text-slate-400 rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                Defaults always on: advanced depth, summarize, extract top, include answer, include raw content, include favicon.
+
+              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
+                <h3 class="text-sm font-semibold text-slate-200 mb-3">Date Filters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                  <div>
+                    <label for="researchTimeRange" class="block text-sm text-slate-300 mb-2">Time Range</label>
+                    <select id="researchTimeRange" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
+                      <option value="">none</option>
+                      <option value="day">day</option>
+                      <option value="week">week</option>
+                      <option value="month" selected>month</option>
+                      <option value="year">year</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="researchMaxAgeDays" class="block text-sm text-slate-300 mb-2">Max News Age (days)</label>
+                    <input id="researchMaxAgeDays" type="number" min="0" max="3650" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="30" />
+                  </div>
+                  <div>
+                    <label for="researchStartDate" class="block text-sm text-slate-300 mb-2">Start Date</label>
+                    <input id="researchStartDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                  </div>
+                  <div>
+                    <label for="researchEndDate" class="block text-sm text-slate-300 mb-2">End Date</label>
+                    <input id="researchEndDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -445,6 +489,59 @@
       apiHealthy: null,
     };
 
+    const TRUSTED_SITES = [
+      "reuters.com",
+      "apnews.com",
+      "bbc.com",
+      "npr.org",
+      "pbs.org",
+      "wsj.com",
+      "nytimes.com",
+      "washingtonpost.com",
+      "ft.com",
+      "economist.com",
+      "bloomberg.com",
+      "cnbc.com",
+      "forbes.com",
+      "time.com",
+      "theguardian.com",
+      "thetimes.co.uk",
+      "latimes.com",
+      "scmp.com",
+      "nikkei.com",
+      "dw.com",
+      "france24.com",
+      "aljazeera.com",
+      "csmonitor.com",
+      "propublica.org",
+      "nature.com",
+      "science.org",
+      "scientificamerican.com",
+      "newscientist.com",
+      "nejm.org",
+      "thelancet.com",
+      "who.int",
+      "cdc.gov",
+      "un.org",
+      "worldbank.org",
+      "imf.org",
+      "oecd.org",
+      "weforum.org",
+      "wikipedia.org",
+      "britannica.com",
+      "mit.edu",
+      "stanford.edu",
+      "harvard.edu",
+      "ox.ac.uk",
+      "cam.ac.uk",
+      "openai.com",
+      "google.com",
+      "microsoft.com",
+      "ibm.com",
+      "mckinsey.com",
+      "brookings.edu"
+    ];
+
     const els = {
       pingApiBtn: document.getElementById("pingApiBtn"),
       apiStatusBadge: document.getElementById("apiStatusBadge"),
@@ -458,6 +555,9 @@
       searchBtn: document.getElementById("searchBtn"),
       searchWikipediaPreset: document.getElementById("searchWikipediaPreset"),
       searchNewsPreset: document.getElementById("searchNewsPreset"),
+      searchTrustedSites: document.getElementById("searchTrustedSites"),
+      searchAddTrustedSitesBtn: document.getElementById("searchAddTrustedSitesBtn"),
+      searchClearTrustedSitesBtn: document.getElementById("searchClearTrustedSitesBtn"),
       searchCards: document.getElementById("searchCards"),
       searchMeta: document.getElementById("searchMeta"),
       searchSummaryBox: document.getElementById("searchSummaryBox"),
@@ -465,6 +565,9 @@
       researchBtn: document.getElementById("researchBtn"),
       researchAIPreset: document.getElementById("researchAIPreset"),
       researchAmbiguousPreset: document.getElementById("researchAmbiguousPreset"),
+      researchTrustedSites: document.getElementById("researchTrustedSites"),
+      researchAddTrustedSitesBtn: document.getElementById("researchAddTrustedSitesBtn"),
+      researchClearTrustedSitesBtn: document.getElementById("researchClearTrustedSitesBtn"),
       researchSummary: document.getElementById("researchSummary"),
       researchTopMeta: document.getElementById("researchTopMeta"),
       researchAmbiguousBadge: document.getElementById("researchAmbiguousBadge"),
@@ -511,6 +614,54 @@
       return value.split(",").map(v => v.trim()).filter(Boolean);
     }
 
+    function uniqueDomains(domains) {
+      return [...new Set(domains.map(d => d.trim().toLowerCase()).filter(Boolean))];
+    }
+
+    function getSelectedDomains(selectEl) {
+      if (!selectEl) return [];
+      return Array.from(selectEl.selectedOptions).map(option => option.value);
+    }
+
+    function setSelectedTrustedSites(selectEl, domains) {
+      if (!selectEl) return;
+      const wanted = new Set(uniqueDomains(domains));
+      Array.from(selectEl.options).forEach(option => {
+        option.selected = wanted.has(option.value);
+      });
+    }
+
+    function mergeIncludeDomains(inputId, selectEl) {
+      const inputEl = document.getElementById(inputId);
+      const manual = parseDomains(inputEl.value || "");
+      const selected = getSelectedDomains(selectEl);
+      return uniqueDomains([...manual, ...selected]);
+    }
+
+    function addSelectedTrustedSitesToInput(inputId, selectEl) {
+      const inputEl = document.getElementById(inputId);
+      const merged = mergeIncludeDomains(inputId, selectEl);
+      inputEl.value = merged.join(",");
+    }
+
+    function clearTrustedSiteSelection(selectEl) {
+      if (!selectEl) return;
+      Array.from(selectEl.options).forEach(option => {
+        option.selected = false;
+      });
+    }
+
+    function populateTrustedSiteDropdown(selectEl) {
+      if (!selectEl) return;
+      selectEl.innerHTML = "";
+      TRUSTED_SITES.forEach(domain => {
+        const option = document.createElement("option");
+        option.value = domain;
+        option.textContent = domain;
+        selectEl.appendChild(option);
+      });
+    }
+
     function faviconHtml(item, sizeClass = "w-4 h-4") {
       const url = (item && item.favicon) ? String(item.favicon) : "";
       if (!url) return "";
@@ -541,7 +692,6 @@
         endDate = toIsoDate(now);
       }
 
-      // If explicit date window is used, skip coarse time_range.
       const effectiveTimeRange = startDate || endDate ? null : timeRange;
 
       return {
@@ -592,9 +742,7 @@
       }
     }
 
-    function updateConfigView() {
-      // API base is intentionally fixed for production deployment.
-    }
+    function updateConfigView() {}
 
     function updateApiStatus(healthy, message = "") {
       state.apiHealthy = healthy;
@@ -853,7 +1001,7 @@
           max_results: Number(document.getElementById("searchMaxResults").value),
           summarize: true,
           extract_top_results: true,
-          include_domains: parseDomains(document.getElementById("searchIncludeDomains").value),
+          include_domains: mergeIncludeDomains("searchIncludeDomains", els.searchTrustedSites),
           exclude_domains: parseDomains(document.getElementById("searchExcludeDomains").value),
           ...buildTavilyOptions("search"),
         };
@@ -885,7 +1033,7 @@
           max_results: Number(document.getElementById("researchMaxResults").value),
           summarize: true,
           extract_top_results: true,
-          include_domains: parseDomains(document.getElementById("researchIncludeDomains").value),
+          include_domains: mergeIncludeDomains("researchIncludeDomains", els.researchTrustedSites),
           exclude_domains: parseDomains(document.getElementById("researchExcludeDomains").value),
           ...buildTavilyOptions("research"),
         };
@@ -1036,6 +1184,7 @@
             document.getElementById("searchQuery").value = btn.dataset.query || "";
             document.getElementById("searchTopic").value = btn.dataset.topic || "general";
             document.getElementById("searchIncludeDomains").value = btn.dataset.include || "";
+            setSelectedTrustedSites(els.searchTrustedSites, parseDomains(btn.dataset.include || ""));
           }
 
           if (kind === "research") {
@@ -1043,6 +1192,7 @@
             document.getElementById("researchQuery").value = btn.dataset.query || "";
             document.getElementById("researchTopic").value = btn.dataset.topic || "general";
             document.getElementById("researchIncludeDomains").value = btn.dataset.include || "";
+            setSelectedTrustedSites(els.researchTrustedSites, parseDomains(btn.dataset.include || ""));
           }
 
           if (kind === "extract") {
@@ -1067,6 +1217,7 @@
         document.getElementById("searchTopic").value = "general";
         document.getElementById("searchMaxResults").value = "5";
         document.getElementById("searchIncludeDomains").value = "wikipedia.org";
+        setSelectedTrustedSites(els.searchTrustedSites, ["wikipedia.org"]);
         document.getElementById("searchExcludeDomains").value = "";
         document.getElementById("searchTimeRange").value = "";
         document.getElementById("searchMaxAgeDays").value = "0";
@@ -1079,6 +1230,7 @@
         document.getElementById("searchTopic").value = "news";
         document.getElementById("searchMaxResults").value = "5";
         document.getElementById("searchIncludeDomains").value = "reuters.com,bbc.com,apnews.com";
+        setSelectedTrustedSites(els.searchTrustedSites, ["reuters.com", "bbc.com", "apnews.com"]);
         document.getElementById("searchExcludeDomains").value = "";
         document.getElementById("searchTimeRange").value = "week";
         document.getElementById("searchMaxAgeDays").value = "7";
@@ -1091,6 +1243,7 @@
         document.getElementById("researchTopic").value = "general";
         document.getElementById("researchMaxResults").value = "5";
         document.getElementById("researchIncludeDomains").value = "wikipedia.org";
+        setSelectedTrustedSites(els.researchTrustedSites, ["wikipedia.org"]);
         document.getElementById("researchExcludeDomains").value = "";
         document.getElementById("researchTimeRange").value = "month";
         document.getElementById("researchMaxAgeDays").value = "30";
@@ -1103,6 +1256,7 @@
         document.getElementById("researchTopic").value = "general";
         document.getElementById("researchMaxResults").value = "5";
         document.getElementById("researchIncludeDomains").value = "wikipedia.org";
+        setSelectedTrustedSites(els.researchTrustedSites, ["wikipedia.org"]);
         document.getElementById("researchExcludeDomains").value = "";
         document.getElementById("researchTimeRange").value = "";
         document.getElementById("researchMaxAgeDays").value = "0";
@@ -1114,6 +1268,22 @@
         document.getElementById("extractUrl").value = "https://en.wikipedia.org/wiki/Artificial_intelligence";
       });
 
+      els.searchAddTrustedSitesBtn.addEventListener("click", () => {
+        addSelectedTrustedSitesToInput("searchIncludeDomains", els.searchTrustedSites);
+      });
+
+      els.searchClearTrustedSitesBtn.addEventListener("click", () => {
+        clearTrustedSiteSelection(els.searchTrustedSites);
+      });
+
+      els.researchAddTrustedSitesBtn.addEventListener("click", () => {
+        addSelectedTrustedSitesToInput("researchIncludeDomains", els.researchTrustedSites);
+      });
+
+      els.researchClearTrustedSitesBtn.addEventListener("click", () => {
+        clearTrustedSiteSelection(els.researchTrustedSites);
+      });
+
     }
 
     function init() {
@@ -1123,6 +1293,10 @@
       wireTabButtons();
       wirePresetButtons();
       wireActionButtons();
+      populateTrustedSiteDropdown(els.searchTrustedSites);
+      populateTrustedSiteDropdown(els.researchTrustedSites);
+      setSelectedTrustedSites(els.searchTrustedSites, parseDomains(document.getElementById("searchIncludeDomains").value));
+      setSelectedTrustedSites(els.researchTrustedSites, parseDomains(document.getElementById("researchIncludeDomains").value));
 
       activateTab("dashboard");
       updateApiStatus(null, "Connecting to backend...");
