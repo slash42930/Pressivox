@@ -25,7 +25,9 @@
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-slate-100 min-h-screen">
+  <div class="fixed -top-24 -left-24 w-72 h-72 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none"></div>
+  <div class="fixed -bottom-24 -right-24 w-80 h-80 rounded-full bg-fuchsia-500/10 blur-3xl pointer-events-none"></div>
   <div id="app" class="max-w-7xl mx-auto px-4 py-6">
     <header class="mb-6">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -39,15 +41,13 @@
           </div>
         </div>
 
-        <div class="w-full xl:w-[360px] rounded-3xl bg-slate-900 border border-slate-800 p-4">
+        <div class="w-full xl:w-[360px] rounded-3xl bg-slate-900/90 border border-slate-800 p-4 shadow-2xl shadow-cyan-950/30">
           <div class="flex items-center justify-between gap-4 mb-3">
             <div class="text-sm text-slate-300 font-medium">Backend status</div>
             <span id="apiStatusBadge" class="text-xs px-3 py-1 rounded-full border border-slate-700 text-slate-400">Not checked</span>
           </div>
-          <button id="pingApiBtn" class="w-full rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">
-            Ping API
-          </button>
-          <p class="text-xs text-slate-500 mt-3">API endpoint is managed internally for this deployment.</p>
+          <p class="text-xs text-slate-400 mt-1">Connected automatically to the Pressivox production backend.</p>
+          <p class="text-xs text-slate-500 mt-2">No manual API setup required.</p>
         </div>
       </div>
     </header>
@@ -61,20 +61,15 @@
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="research">Research</button>
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="extract">Extract</button>
             <div class="border-t border-slate-700 my-2"></div>
-            <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition text-sm" data-tab="tavily-map">Tavily: Map</button>
-            <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition text-sm" data-tab="tavily-crawl">Tavily: Crawl</button>
-            <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition text-sm" data-tab="tavily-research">Tavily: Research</button>
-            <div class="border-t border-slate-700 my-2"></div>
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="histories">Histories</button>
-            <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="debug">Debug JSON</button>
           </nav>
 
           <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
             <p class="text-sm font-semibold mb-3">Tips</p>
             <ul class="space-y-2 text-sm text-slate-400">
               <li>Research view now shows summary, selected sources, ambiguity groups, and result cards.</li>
-              <li>JSON is still available, but moved to a separate debug area so it does not dominate the UI.</li>
-              <li>You can deploy this as static HTML later and inject config at runtime.</li>
+              <li>API connection is automatic and pinned to production.</li>
+              <li>Use Search, Research, Extract, and Histories for the main workflow.</li>
             </ul>
           </div>
         </div>
@@ -109,9 +104,6 @@
                   <h2 class="text-2xl font-semibold">Quick start</h2>
                   <p class="text-slate-400">Fast way to test your backend without digging through raw JSON.</p>
                 </div>
-                <button id="dashboardPingBtn" class="rounded-2xl bg-emerald-600 hover:bg-emerald-500 px-4 py-3 font-medium">
-                  Check Health
-                </button>
               </div>
 
               <div id="dashboardQuickActions" class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -408,151 +400,6 @@
           </div>
         </section>
 
-        <!-- TAVILY MAP -->
-        <section id="tab-tavily-map" class="tab-panel hidden">
-          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
-            <div class="mb-6">
-              <h2 class="text-2xl font-semibold">Tavily: Map</h2>
-              <p class="text-slate-400">Discover URLs on a target website (CLI-style map usage).</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
-              <div class="xl:col-span-2">
-                <label for="mapUrl" class="block text-sm text-slate-300 mb-2">Website URL</label>
-                <input id="mapUrl" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="https://docs.tavily.com" />
-              </div>
-              <div>
-                <label for="mapMaxDepth" class="block text-sm text-slate-300 mb-2">Max Depth</label>
-                <input id="mapMaxDepth" type="number" min="1" max="5" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="1" />
-              </div>
-              <div>
-                <label for="mapMaxResults" class="block text-sm text-slate-300 mb-2">Max Results</label>
-                <input id="mapMaxResults" type="number" min="1" max="500" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="50" />
-              </div>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-4">
-              <label class="flex items-center gap-2 text-sm text-slate-300">
-                <input id="mapIncludeSubdomains" type="checkbox" checked class="accent-violet-500">
-                Include subdomains
-              </label>
-              <button id="tavilyMapBtn" class="rounded-2xl bg-violet-600 hover:bg-violet-500 px-4 py-3 font-medium">Fetch Map Data</button>
-            </div>
-          </div>
-
-          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-            <div class="flex items-center justify-between gap-4 mb-4">
-              <h3 class="text-xl font-semibold">Map Results</h3>
-              <div id="tavilyMapMeta" class="text-sm text-slate-400">No map data yet.</div>
-            </div>
-            <div id="tavilyMapCards" class="space-y-3 mb-4"></div>
-            <details class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-              <summary class="cursor-pointer text-sm text-slate-300">Show raw map JSON</summary>
-              <div id="tavilyMapOutput" class="text-slate-300 whitespace-pre-wrap max-h-[600px] overflow-auto scrollbar-thin mt-3">No map data fetched.</div>
-            </details>
-          </div>
-        </section>
-
-        <!-- TAVILY CRAWL -->
-        <section id="tab-tavily-crawl" class="tab-panel hidden">
-          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
-            <div class="mb-6">
-              <h2 class="text-2xl font-semibold">Tavily: Crawl</h2>
-              <p class="text-slate-400">Crawl multiple URLs with Tavily extract.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div class="xl:col-span-2">
-                <label for="crawlUrls" class="block text-sm text-slate-300 mb-2">URLs (one per line)</label>
-                <textarea id="crawlUrls" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3 h-32" placeholder="https://example.com&#10;https://example.org"></textarea>
-              </div>
-              <div>
-                <label for="crawlMaxPages" class="block text-sm text-slate-300 mb-2">Max Pages</label>
-                <input id="crawlMaxPages" type="number" min="1" max="50" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="5" />
-              </div>
-              <div class="flex items-end gap-6">
-                <label class="flex items-center gap-2 text-sm text-slate-300">
-                  <input id="crawlIncludeRawContent" type="checkbox" checked class="accent-violet-500">
-                  Raw content
-                </label>
-                <label class="flex items-center gap-2 text-sm text-slate-300">
-                  <input id="crawlIncludeImages" type="checkbox" class="accent-violet-500">
-                  Images
-                </label>
-              </div>
-            </div>
-
-            <div class="flex flex-wrap gap-3 mt-6">
-              <button id="tavilyCrawlBtn" class="rounded-2xl bg-violet-600 hover:bg-violet-500 px-4 py-3 font-medium">Start Crawl</button>
-              <button id="crawlPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">Sample URLs</button>
-            </div>
-          </div>
-
-          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-            <div class="flex items-center justify-between gap-4 mb-4">
-              <h3 class="text-xl font-semibold">Crawl Results</h3>
-              <div id="tavilyCrawlMeta" class="text-sm text-slate-400">No crawl yet.</div>
-            </div>
-            <div id="tavilyCrawlCards" class="space-y-3"></div>
-          </div>
-        </section>
-
-        <!-- TAVILY RESEARCH TASKS -->
-        <section id="tab-tavily-research" class="tab-panel hidden">
-          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
-            <div class="mb-6">
-              <h2 class="text-2xl font-semibold">Tavily: Research Tasks</h2>
-              <p class="text-slate-400">Submit research tasks and track their progress.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-              <div class="xl:col-span-2">
-                <label for="researchTaskQuery" class="block text-sm text-slate-300 mb-2">Query</label>
-                <input id="researchTaskQuery" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="artificial intelligence trends 2025" />
-              </div>
-              <div>
-                <label for="researchTaskFocus" class="block text-sm text-slate-300 mb-2">Focus (optional)</label>
-                <input id="researchTaskFocus" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" placeholder="tech, business, science..." />
-              </div>
-              <div>
-                <label for="researchTaskMaxSources" class="block text-sm text-slate-300 mb-2">Max Sources</label>
-                <input id="researchTaskMaxSources" type="number" min="1" max="100" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="20" />
-              </div>
-            </div>
-
-            <div class="flex flex-wrap gap-3 mb-6">
-              <button id="researchTaskSubmitBtn" class="rounded-2xl bg-violet-600 hover:bg-violet-500 px-4 py-3 font-medium">Submit Task</button>
-              <button id="researchTaskPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">Sample Query</button>
-            </div>
-
-            <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-              <label for="researchTaskId" class="block text-sm text-slate-300 mb-2">Task ID (to check status)</label>
-              <div class="flex gap-3">
-                <input id="researchTaskId" class="flex-1 rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="Enter task ID..." />
-                <button id="researchTaskCheckBtn" class="rounded-2xl bg-slate-700 hover:bg-slate-600 px-4 py-3 font-medium">Check Status</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-              <div class="flex items-center justify-between gap-4 mb-4">
-                <h3 class="text-xl font-semibold">Submit Result</h3>
-                <div id="researchTaskSubmitMeta" class="text-sm text-slate-400">No task submitted.</div>
-              </div>
-              <div id="researchTaskSubmitOutput" class="text-sm text-slate-300 whitespace-pre-wrap max-h-[300px] overflow-auto scrollbar-thin">Task submissions will appear here.</div>
-            </div>
-
-            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-              <div class="flex items-center justify-between gap-4 mb-4">
-                <h3 class="text-xl font-semibold">Status Result</h3>
-                <div id="researchTaskStatusMeta" class="text-sm text-slate-400">No status checked.</div>
-              </div>
-              <div id="researchTaskStatusOutput" class="text-sm text-slate-300 whitespace-pre-wrap max-h-[300px] overflow-auto scrollbar-thin">Task status checks will appear here.</div>
-            </div>
-          </div>
-        </section>
-
         <!-- HISTORIES -->
         <section id="tab-histories" class="tab-panel hidden">
           <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
@@ -579,22 +426,6 @@
           </div>
         </section>
 
-        <!-- DEBUG -->
-        <section id="tab-debug" class="tab-panel hidden">
-          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <div>
-                <h2 class="text-2xl font-semibold">Debug JSON</h2>
-                <p class="text-slate-400">Raw backend responses stay here, out of the main workflow.</p>
-              </div>
-              <div class="flex gap-3">
-                <button id="debugCopyBtn" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">Copy JSON</button>
-                <button id="debugClearBtn" class="rounded-2xl bg-rose-700 hover:bg-rose-600 px-4 py-3 font-medium">Clear</button>
-              </div>
-            </div>
-            <pre id="debugOutput" class="rounded-2xl bg-slate-950 border border-slate-800 p-4 overflow-auto text-sm min-h-[600px] scrollbar-thin"></pre>
-          </div>
-        </section>
       </main>
     </div>
   </div>
@@ -618,7 +449,6 @@
       pingApiBtn: document.getElementById("pingApiBtn"),
       apiStatusBadge: document.getElementById("apiStatusBadge"),
 
-      dashboardPingBtn: document.getElementById("dashboardPingBtn"),
       dashboardApiStatus: document.getElementById("dashboardApiStatus"),
       dashboardLastQuery: document.getElementById("dashboardLastQuery"),
       dashboardSelectedSources: document.getElementById("dashboardSelectedSources"),
@@ -657,28 +487,6 @@
       loadExtractHistoryBtn: document.getElementById("loadExtractHistoryBtn"),
       searchHistoryCards: document.getElementById("searchHistoryCards"),
       extractHistoryCards: document.getElementById("extractHistoryCards"),
-
-      tavilyMapBtn: document.getElementById("tavilyMapBtn"),
-      tavilyMapMeta: document.getElementById("tavilyMapMeta"),
-      tavilyMapCards: document.getElementById("tavilyMapCards"),
-      tavilyMapOutput: document.getElementById("tavilyMapOutput"),
-
-      tavilyCrawlBtn: document.getElementById("tavilyCrawlBtn"),
-      crawlPreset: document.getElementById("crawlPreset"),
-      tavilyCrawlMeta: document.getElementById("tavilyCrawlMeta"),
-      tavilyCrawlCards: document.getElementById("tavilyCrawlCards"),
-
-      researchTaskSubmitBtn: document.getElementById("researchTaskSubmitBtn"),
-      researchTaskCheckBtn: document.getElementById("researchTaskCheckBtn"),
-      researchTaskPreset: document.getElementById("researchTaskPreset"),
-      researchTaskSubmitMeta: document.getElementById("researchTaskSubmitMeta"),
-      researchTaskStatusMeta: document.getElementById("researchTaskStatusMeta"),
-      researchTaskSubmitOutput: document.getElementById("researchTaskSubmitOutput"),
-      researchTaskStatusOutput: document.getElementById("researchTaskStatusOutput"),
-
-      debugOutput: document.getElementById("debugOutput"),
-      debugCopyBtn: document.getElementById("debugCopyBtn"),
-      debugClearBtn: document.getElementById("debugClearBtn"),
     };
 
     function getBaseUrl() {
@@ -791,14 +599,16 @@
     function updateApiStatus(healthy, message = "") {
       state.apiHealthy = healthy;
       els.dashboardApiStatus.textContent = healthy === true ? "Healthy" : healthy === false ? "Unavailable" : "Unknown";
-      els.apiStatusBadge.textContent = healthy === true ? "Healthy" : healthy === false ? "Unavailable" : "Not checked";
-      els.apiStatusBadge.className = `text-xs px-3 py-1 rounded-full border ${
-        healthy === true
-          ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
-          : healthy === false
-          ? "border-rose-500/30 text-rose-300 bg-rose-500/10"
-          : "border-slate-700 text-slate-400"
-      }`;
+      if (els.apiStatusBadge) {
+        els.apiStatusBadge.textContent = healthy === true ? "Healthy" : healthy === false ? "Unavailable" : "Not checked";
+        els.apiStatusBadge.className = `text-xs px-3 py-1 rounded-full border ${
+          healthy === true
+            ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
+            : healthy === false
+            ? "border-rose-500/30 text-rose-300 bg-rose-500/10"
+            : "border-slate-700 text-slate-400"
+        }`;
+      }
       if (message) setStatus(message);
     }
 
@@ -1031,7 +841,7 @@
     }
 
     function setDebugJson(data) {
-      els.debugOutput.textContent = pretty(data);
+      state.lastResponse = data;
     }
 
     async function runSearch() {
@@ -1195,194 +1005,6 @@
       }
     }
 
-    async function getTavilyMap() {
-      setLoading(els.tavilyMapBtn, true);
-      try {
-        const body = {
-          url: document.getElementById("mapUrl").value,
-          max_depth: Number(document.getElementById("mapMaxDepth").value),
-          max_results: Number(document.getElementById("mapMaxResults").value),
-          include_subdomains: document.getElementById("mapIncludeSubdomains").checked,
-        };
-        const data = await api("/map", "POST", body);
-        renderMapResults(els.tavilyMapCards, data);
-
-        const mappedCount = Array.isArray(data?.results)
-          ? data.results.length
-          : Array.isArray(data?.urls)
-          ? data.urls.length
-          : 0;
-        els.tavilyMapMeta.textContent = `Mapped ${mappedCount} URL(s).`;
-        els.tavilyMapOutput.textContent = pretty(data);
-        setDebugJson(data);
-        setStatus("Tavily map data retrieved.");
-      } catch (err) {
-        els.tavilyMapMeta.textContent = "Map retrieval failed.";
-        renderEmpty(els.tavilyMapCards, err.message);
-        els.tavilyMapOutput.textContent = err.message;
-        setDebugJson({ error: err.message });
-        setStatus(`Map retrieval failed: ${err.message}`);
-      } finally {
-        setLoading(els.tavilyMapBtn, false);
-      }
-    }
-
-    async function tavilyCrawl() {
-      setLoading(els.tavilyCrawlBtn, true);
-      try {
-        const urlsText = document.getElementById("crawlUrls").value;
-        const urls = urlsText
-          .split("\n")
-          .map(url => url.trim())
-          .filter(url => url.length > 0);
-
-        if (!urls.length) {
-          throw new Error("Please enter at least one URL.");
-        }
-
-        const body = {
-          urls,
-          max_pages: Number(document.getElementById("crawlMaxPages").value),
-          include_raw_content: document.getElementById("crawlIncludeRawContent").checked,
-          include_images: document.getElementById("crawlIncludeImages").checked,
-        };
-
-        const data = await api("/crawl", "POST", body);
-        els.tavilyCrawlMeta.textContent = `Crawled ${urls.length} URL(s)`;
-        renderCrawlResults(els.tavilyCrawlCards, data.results || []);
-        setDebugJson(data);
-        setStatus(`Crawl completed for ${urls.length} URL(s).`);
-      } catch (err) {
-        els.tavilyCrawlMeta.textContent = "Crawl failed.";
-        renderEmpty(els.tavilyCrawlCards, err.message);
-        setDebugJson({ error: err.message });
-        setStatus(`Crawl failed: ${err.message}`);
-      } finally {
-        setLoading(els.tavilyCrawlBtn, false);
-      }
-    }
-
-    async function submitResearchTask() {
-      setLoading(els.researchTaskSubmitBtn, true);
-      try {
-        const body = {
-          query: document.getElementById("researchTaskQuery").value,
-          focus: document.getElementById("researchTaskFocus").value || null,
-          max_sources: Number(document.getElementById("researchTaskMaxSources").value),
-        };
-
-        if (!body.query.trim()) {
-          throw new Error("Please enter a query.");
-        }
-
-        const data = await api("/research/tasks", "POST", body);
-        els.researchTaskSubmitMeta.textContent = `Task submitted: ${data.task_id}`;
-        els.researchTaskSubmitOutput.textContent = pretty(data);
-        document.getElementById("researchTaskId").value = data.task_id || "";
-        setDebugJson(data);
-        setStatus(`Research task submitted: ${data.task_id}`);
-      } catch (err) {
-        els.researchTaskSubmitMeta.textContent = "Task submission failed.";
-        els.researchTaskSubmitOutput.textContent = err.message;
-        setDebugJson({ error: err.message });
-        setStatus(`Task submission failed: ${err.message}`);
-      } finally {
-        setLoading(els.researchTaskSubmitBtn, false);
-      }
-    }
-
-    async function checkResearchTaskStatus() {
-      setLoading(els.researchTaskCheckBtn, true);
-      try {
-        const taskId = document.getElementById("researchTaskId").value.trim();
-        if (!taskId) {
-          throw new Error("Please enter a task ID.");
-        }
-
-        const data = await api(`/research/tasks/${encodeURIComponent(taskId)}`);
-        els.researchTaskStatusMeta.textContent = `Task: ${taskId}`;
-        els.researchTaskStatusOutput.textContent = pretty(data);
-        setDebugJson(data);
-        setStatus(`Task status retrieved: ${taskId}`);
-      } catch (err) {
-        els.researchTaskStatusMeta.textContent = "Status check failed.";
-        els.researchTaskStatusOutput.textContent = err.message;
-        setDebugJson({ error: err.message });
-        setStatus(`Status check failed: ${err.message}`);
-      } finally {
-        setLoading(els.researchTaskCheckBtn, false);
-      }
-    }
-
-    function renderCrawlResults(container, results = []) {
-      container.innerHTML = "";
-      if (!results.length) {
-        renderEmpty(container, "No crawl results yet.");
-        return;
-      }
-
-      results.forEach((item, index) => {
-        const card = document.createElement("div");
-        card.className = "rounded-2xl bg-slate-950 border border-slate-800 p-4 hover:border-violet-500/30 transition";
-        card.innerHTML = `
-          <div class="flex items-start justify-between gap-4 mb-3">
-            <div>
-              <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">Crawled #${index + 1}</div>
-              <a href="${item.url}" target="_blank" class="font-semibold text-violet-300 hover:text-violet-200">${escapeHtml(item.title || "Untitled")}</a>
-            </div>
-          </div>
-          <div class="text-xs text-slate-500 mb-3">${escapeHtml(item.source || "unknown source")}</div>
-          <div class="text-sm text-slate-400 mb-2">Length: ${item.content_length || 0} chars</div>
-          ${item.raw_content ? `<div class="text-xs text-slate-500 max-h-56 overflow-auto scrollbar-thin bg-slate-900 rounded p-2 whitespace-pre-wrap">${escapeHtml(item.raw_content)}</div>` : ""}
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function renderMapResults(container, data = {}) {
-      container.innerHTML = "";
-
-      const urls = [];
-
-      if (Array.isArray(data?.urls)) {
-        urls.push(...data.urls.map(u => ({ url: u })));
-      }
-
-      if (Array.isArray(data?.results)) {
-        data.results.forEach(item => {
-          if (typeof item === "string") {
-            urls.push({ url: item });
-          } else if (item && item.url) {
-            urls.push(item);
-          }
-        });
-      }
-
-      if (!urls.length) {
-        renderEmpty(container, "No mapped URLs returned.");
-        return;
-      }
-
-      urls.slice(0, 30).forEach((item, index) => {
-        const url = item.url || "";
-        const card = document.createElement("div");
-        card.className = "rounded-2xl bg-slate-950 border border-slate-800 p-4";
-        card.innerHTML = `
-          <div class="text-xs uppercase tracking-wide text-slate-500 mb-2">Mapped #${index + 1}</div>
-          <a href="${url}" target="_blank" class="font-semibold text-violet-300 hover:text-violet-200 break-all">${escapeHtml(url)}</a>
-          ${item.title ? `<div class="text-sm text-slate-400 mt-2">${escapeHtml(item.title)}</div>` : ""}
-        `;
-        container.appendChild(card);
-      });
-
-      if (urls.length > 30) {
-        const more = document.createElement("div");
-        more.className = "text-sm text-slate-400";
-        more.textContent = `Showing first 30 of ${urls.length} mapped URLs.`;
-        container.appendChild(more);
-      }
-    }
-
     function activateTab(tabName) {
       document.querySelectorAll(".tab-panel").forEach(panel => panel.classList.add("hidden"));
       document.querySelectorAll(".tab-btn").forEach(btn => {
@@ -1432,32 +1054,13 @@
     }
 
     function wireActionButtons() {
-      els.pingApiBtn.addEventListener("click", pingApi);
-      els.dashboardPingBtn.addEventListener("click", pingApi);
+      if (els.pingApiBtn) els.pingApiBtn.addEventListener("click", pingApi);
 
       els.searchBtn.addEventListener("click", runSearch);
       els.researchBtn.addEventListener("click", runResearch);
       els.extractBtn.addEventListener("click", runExtract);
       els.loadSearchHistoryBtn.addEventListener("click", loadSearchHistory);
       els.loadExtractHistoryBtn.addEventListener("click", loadExtractHistory);
-
-      els.tavilyMapBtn.addEventListener("click", getTavilyMap);
-      els.tavilyCrawlBtn.addEventListener("click", tavilyCrawl);
-      els.crawlPreset.addEventListener("click", () => {
-        document.getElementById("crawlUrls").value = 
-          "https://en.wikipedia.org/wiki/Artificial_intelligence\n" +
-          "https://en.wikipedia.org/wiki/Machine_learning\n" +
-          "https://en.wikipedia.org/wiki/Deep_learning";
-        document.getElementById("crawlMaxPages").value = "3";
-      });
-
-      els.researchTaskSubmitBtn.addEventListener("click", submitResearchTask);
-      els.researchTaskCheckBtn.addEventListener("click", checkResearchTaskStatus);
-      els.researchTaskPreset.addEventListener("click", () => {
-        document.getElementById("researchTaskQuery").value = "artificial intelligence applications";
-        document.getElementById("researchTaskFocus").value = "technology";
-        document.getElementById("researchTaskMaxSources").value = "20";
-      });
 
       els.searchWikipediaPreset.addEventListener("click", () => {
         document.getElementById("searchQuery").value = "artificial intelligence";
@@ -1511,19 +1114,6 @@
         document.getElementById("extractUrl").value = "https://en.wikipedia.org/wiki/Artificial_intelligence";
       });
 
-      els.debugCopyBtn.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(els.debugOutput.textContent || "");
-          setStatus("Copied debug JSON.");
-        } catch {
-          setStatus("Could not copy debug JSON.");
-        }
-      });
-
-      els.debugClearBtn.addEventListener("click", () => {
-        els.debugOutput.textContent = "";
-        setStatus("Cleared debug JSON.");
-      });
     }
 
     function init() {
@@ -1535,8 +1125,8 @@
       wireActionButtons();
 
       activateTab("dashboard");
-      updateApiStatus(null, "Workspace ready.");
-      els.debugOutput.textContent = "// Raw backend responses will appear here.";
+      updateApiStatus(null, "Connecting to backend...");
+      pingApi();
     }
 
     init();
