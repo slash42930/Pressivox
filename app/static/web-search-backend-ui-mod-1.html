@@ -95,8 +95,8 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div class="xl:col-span-2 rounded-3xl bg-slate-900 border border-slate-800 p-6">
+          <div class="grid grid-cols-1 gap-6">
+            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
               <div class="flex items-center justify-between mb-4 gap-4">
                 <div>
                   <h2 class="text-2xl font-semibold">Quick start</h2>
@@ -125,19 +125,6 @@
               </div>
             </div>
 
-            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-              <h2 class="text-xl font-semibold mb-4">Runtime config</h2>
-              <div class="space-y-3 text-sm">
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400 mb-1">API mode</div>
-                  <div class="text-slate-200">Fixed production endpoint</div>
-                </div>
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400 mb-1">Active backend</div>
-                  <div class="text-slate-200 break-all">https://pressivox.onrender.com/api/v1</div>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -290,7 +277,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   <div class="xl:col-span-2">
                     <label for="researchIncludeDomains" class="block text-sm text-slate-300 mb-2">Include Domains (manual)</label>
-                    <input id="researchIncludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="wikipedia.org" />
+                    <input id="researchIncludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="hotnews.ro,digi24.ro" />
                   </div>
                   <div>
                     <label for="researchExcludeDomains" class="block text-sm text-slate-300 mb-2">Exclude Domains</label>
@@ -720,6 +707,27 @@
 
       // Backend performs silent top-domain inference by language/topic when this is empty.
       return [];
+    }
+
+    function selectedLanguage(prefix) {
+      return (document.getElementById(`${prefix}Language`)?.value || "english").toLowerCase();
+    }
+
+    function defaultIncludeForPreset(prefix, topic = "general") {
+      const language = selectedLanguage(prefix);
+      const normalizedTopic = (topic || "general").toLowerCase();
+
+      if (language === "romanian") {
+        if (normalizedTopic === "news") {
+          return "hotnews.ro,digi24.ro,g4media.ro";
+        }
+        return "digi24.ro,hotnews.ro,adevarul.ro";
+      }
+
+      if (normalizedTopic === "news") {
+        return "reuters.com,bbc.com,apnews.com";
+      }
+      return "wikipedia.org";
     }
 
     function tokenizeContext(text = "") {
@@ -1306,17 +1314,17 @@
           if (kind === "search") {
             activateTab("search");
             document.getElementById("searchQuery").value = btn.dataset.query || "";
-            document.getElementById("searchTopic").value = btn.dataset.topic || "general";
-            document.getElementById("searchLanguage").value = "english";
-            document.getElementById("searchIncludeDomains").value = btn.dataset.include || "";
+            const topic = btn.dataset.topic || "general";
+            document.getElementById("searchTopic").value = topic;
+            document.getElementById("searchIncludeDomains").value = defaultIncludeForPreset("search", topic);
           }
 
           if (kind === "research") {
             activateTab("research");
             document.getElementById("researchQuery").value = btn.dataset.query || "";
-            document.getElementById("researchTopic").value = btn.dataset.topic || "general";
-            document.getElementById("researchLanguage").value = "english";
-            document.getElementById("researchIncludeDomains").value = btn.dataset.include || "";
+            const topic = btn.dataset.topic || "general";
+            document.getElementById("researchTopic").value = topic;
+            document.getElementById("researchIncludeDomains").value = defaultIncludeForPreset("research", topic);
           }
 
           if (kind === "extract") {
@@ -1339,9 +1347,8 @@
       els.searchWikipediaPreset.addEventListener("click", () => {
         document.getElementById("searchQuery").value = "artificial intelligence";
         document.getElementById("searchTopic").value = "general";
-        document.getElementById("searchLanguage").value = "english";
         document.getElementById("searchMaxResults").value = "5";
-        document.getElementById("searchIncludeDomains").value = "wikipedia.org";
+        document.getElementById("searchIncludeDomains").value = defaultIncludeForPreset("search", "general");
         document.getElementById("searchExcludeDomains").value = "";
         document.getElementById("searchTimeRange").value = "";
         document.getElementById("searchMaxAgeDays").value = "0";
@@ -1352,9 +1359,8 @@
       els.searchNewsPreset.addEventListener("click", () => {
         document.getElementById("searchQuery").value = "latest AI news";
         document.getElementById("searchTopic").value = "news";
-        document.getElementById("searchLanguage").value = "english";
         document.getElementById("searchMaxResults").value = "5";
-        document.getElementById("searchIncludeDomains").value = "reuters.com,bbc.com,apnews.com";
+        document.getElementById("searchIncludeDomains").value = defaultIncludeForPreset("search", "news");
         document.getElementById("searchExcludeDomains").value = "";
         document.getElementById("searchTimeRange").value = "week";
         document.getElementById("searchMaxAgeDays").value = "7";
@@ -1365,9 +1371,8 @@
       els.researchAIPreset.addEventListener("click", () => {
         document.getElementById("researchQuery").value = "artificial intelligence";
         document.getElementById("researchTopic").value = "general";
-        document.getElementById("researchLanguage").value = "english";
         document.getElementById("researchMaxResults").value = "5";
-        document.getElementById("researchIncludeDomains").value = "wikipedia.org";
+        document.getElementById("researchIncludeDomains").value = defaultIncludeForPreset("research", "general");
         document.getElementById("researchExcludeDomains").value = "";
         document.getElementById("researchTimeRange").value = "month";
         document.getElementById("researchMaxAgeDays").value = "30";
@@ -1378,9 +1383,8 @@
       els.researchAmbiguousPreset.addEventListener("click", () => {
         document.getElementById("researchQuery").value = "Mercury";
         document.getElementById("researchTopic").value = "general";
-        document.getElementById("researchLanguage").value = "english";
         document.getElementById("researchMaxResults").value = "5";
-        document.getElementById("researchIncludeDomains").value = "wikipedia.org";
+        document.getElementById("researchIncludeDomains").value = defaultIncludeForPreset("research", "general");
         document.getElementById("researchExcludeDomains").value = "";
         document.getElementById("researchTimeRange").value = "";
         document.getElementById("researchMaxAgeDays").value = "0";

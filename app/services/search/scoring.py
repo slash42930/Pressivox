@@ -201,23 +201,29 @@ def smart_select_domains(query: str, topic: str, language: str = "english", top_
     topic_key = (topic or "").strip().lower()
     terms = query_terms(query)
 
-    candidates: set[str] = set(TRUSTED_GENERAL) | set(TRUST_SCORE_BY_DOMAIN)
     if lang == "romanian":
-        candidates.update(TRUST_SCORE_RO_BY_DOMAIN)
+        # In Romanian mode, keep include domains focused on Romanian sources.
+        candidates: set[str] = set(TRUST_SCORE_RO_BY_DOMAIN)
+        topic_hint_pool = TOPIC_DOMAIN_HINTS_RO
+        query_hint_pool = QUERY_INTENT_HINTS_RO
+    else:
+        candidates = set(TRUSTED_GENERAL) | set(TRUST_SCORE_BY_DOMAIN)
+        topic_hint_pool = TOPIC_DOMAIN_HINTS
+        query_hint_pool = QUERY_INTENT_HINTS
 
-    topic_hint_pool = TOPIC_DOMAIN_HINTS_RO if lang == "romanian" else TOPIC_DOMAIN_HINTS
     for domains in topic_hint_pool.values():
         candidates.update(domains)
 
-    query_hint_pool = QUERY_INTENT_HINTS_RO if lang == "romanian" else QUERY_INTENT_HINTS
     for domains in query_hint_pool.values():
         candidates.update(domains)
 
     ranked: list[tuple[str, float]] = []
     for domain in candidates:
-        score = float(TRUST_SCORE_BY_DOMAIN.get(domain, 0))
-        score += float(TRUST_SCORE_RO_BY_DOMAIN.get(domain, 0))
-        score += float(TRUSTED_GENERAL.get(domain, 0)) * 0.6
+        if lang == "romanian":
+            score = float(TRUST_SCORE_RO_BY_DOMAIN.get(domain, 0))
+        else:
+            score = float(TRUST_SCORE_BY_DOMAIN.get(domain, 0))
+            score += float(TRUSTED_GENERAL.get(domain, 0)) * 0.6
 
         if topic_key in topic_hint_pool and domain in topic_hint_pool[topic_key]:
             score += 14.0
@@ -230,7 +236,7 @@ def smart_select_domains(query: str, topic: str, language: str = "english", top_
             score += 3.0
 
         if lang == "romanian":
-            score += 6.0 if domain.endswith(".ro") else -2.0
+            score += 9.0 if (domain.endswith(".ro") or domain in TRUST_SCORE_RO_BY_DOMAIN) else -12.0
 
         ranked.append((domain, score))
 
@@ -277,14 +283,27 @@ def language_domain_alignment(source: str, language: str) -> int:
 
     if lang == "romanian":
         if root.endswith(".ro"):
-            return 10
+            return 14
         if root in TRUST_SCORE_RO_BY_DOMAIN:
             return 12
-        return -4
+        return -16
 
     if root.endswith(".ro"):
         return -2
     return 4
+
+
+def non_preferred_language_domain_penalty(source: str, language: str) -> int:
+    """Penalize domains that do not align with selected language preference."""
+    root = host_root(source)
+    lang = normalize_language(language)
+
+    if lang == "romanian":
+        if root.endswith(".ro") or root in TRUST_SCORE_RO_BY_DOMAIN:
+            return 0
+        return 24
+
+    return 0
 
 
 def topical_domain_relevance(topic: str, query: str, source: str, language: str = "english") -> int:
@@ -568,6 +587,7 @@ def rerank_results(query: str, topic: str, results: list[dict], language: str = 
             - (side_topic_penalty(query, title) * weights["side_topic"])
             - (commercial_page_penalty(query, item) * weights["commercial"])
             - (non_english_wikipedia_penalty(source) * weights["non_english_wikipedia"])
+            - non_preferred_language_domain_penalty(source, language=language)
         )
 
         new_item = dict(item)
