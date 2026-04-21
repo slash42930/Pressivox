@@ -42,10 +42,7 @@
         </div>
 
         <div class="w-full xl:w-[360px] rounded-3xl bg-slate-900/90 border border-slate-800 p-4 shadow-2xl shadow-cyan-950/30">
-          <div class="flex items-center justify-between gap-4 mb-3">
-            <div class="text-sm text-slate-300 font-medium">Status</div>
-            <span id="apiStatusBadge" class="text-xs px-3 py-1 rounded-full border border-slate-700 text-slate-400">Not checked</span>
-          </div>
+          <div class="text-sm text-slate-300">Search, compare, and save what matters.</div>
         </div>
       </div>
     </header>
@@ -65,9 +62,9 @@
           <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
             <p class="text-sm font-semibold mb-3">Tips</p>
             <ul class="space-y-2 text-sm text-slate-400">
-              <li>Research view now shows summary, selected sources, ambiguity groups, and result cards.</li>
-              <li>API connection is automatic and pinned to production.</li>
-              <li>Use Search, Research, Extract, and Histories for the main workflow.</li>
+              <li>Start with Search for quick results, then switch to Research for a clearer overview.</li>
+              <li>Use Include and Exclude Domains only when you want to narrow sources manually.</li>
+              <li>Use Histories to revisit previous searches and extracted pages in this session.</li>
             </ul>
           </div>
         </div>
@@ -76,11 +73,7 @@
       <main class="lg:col-span-9 xl:col-span-10 space-y-6">
         <!-- DASHBOARD -->
         <section id="tab-dashboard" class="tab-panel">
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-5">
-              <div class="text-sm text-slate-400 mb-2">Status</div>
-              <div id="dashboardApiStatus" class="text-2xl font-semibold">Unknown</div>
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
             <div class="rounded-3xl bg-slate-900 border border-slate-800 p-5">
               <div class="text-sm text-slate-400 mb-2">Last query</div>
               <div id="dashboardLastQuery" class="text-2xl font-semibold break-words">-</div>
@@ -100,7 +93,7 @@
               <div class="flex items-center justify-between mb-4 gap-4">
                 <div>
                   <h2 class="text-2xl font-semibold">Quick start</h2>
-                  <p class="text-slate-400">Fast way to test your backend without digging through raw JSON.</p>
+                  <p class="text-slate-400">Run common tasks quickly and jump into results right away.</p>
                 </div>
               </div>
 
@@ -119,9 +112,8 @@
                 </button>
               </div>
 
-              <div class="mt-6 rounded-2xl bg-slate-950 border border-slate-800 p-4">
-                <h3 class="font-semibold mb-2">Last status</h3>
-                <div id="dashboardStatusLog" class="text-sm text-slate-300 whitespace-pre-wrap">No activity yet.</div>
+              <div class="mt-6 rounded-2xl bg-slate-950 border border-slate-800 p-4 text-sm text-slate-300">
+                Tip: switch language before running a preset if you want region-specific sources by default.
               </div>
             </div>
 
@@ -133,7 +125,10 @@
           <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
             <div class="mb-6">
               <h2 class="text-2xl font-semibold">Search</h2>
-              <p class="text-slate-400">Explore search results in cards first, with JSON available separately.</p>
+              <p class="text-slate-400">Find relevant results quickly and browse them as clean cards.</p>
+            </div>
+            <div class="mb-6 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">
+              Tip: leave Include Domains empty to get automatic source suggestions based on your topic and language.
             </div>
 
             <div class="space-y-4">
@@ -240,7 +235,10 @@
           <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
             <div class="mb-6">
               <h2 class="text-2xl font-semibold">Research</h2>
-              <p class="text-slate-400">Better overview for final answers, selected sources, and ambiguity groups.</p>
+              <p class="text-slate-400">Get a structured overview with key points and best-matching sources.</p>
+            </div>
+            <div class="mb-6 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">
+              Tip: use Research when you want a concise summary plus grouped meanings for ambiguous queries.
             </div>
 
             <div class="space-y-4">
@@ -386,7 +384,10 @@
           <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
             <div class="mb-6">
               <h2 class="text-2xl font-semibold">Extract</h2>
-              <p class="text-slate-400">Single-page extraction with readable preview and highlighted passages.</p>
+              <p class="text-slate-400">Open one page and read the important content in a cleaner format.</p>
+            </div>
+            <div class="mb-6 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">
+              Tip: paste any article link, then use Important passages for a fast skim.
             </div>
 
             <div class="grid grid-cols-1 gap-4">
@@ -430,7 +431,10 @@
           <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
             <div class="mb-6">
               <h2 class="text-2xl font-semibold">Histories</h2>
-              <p class="text-slate-400">Search and extraction history in clean cards.</p>
+              <p class="text-slate-400">Reopen your recent searches and extracted pages.</p>
+            </div>
+            <div class="mb-6 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">
+              Tip: histories are useful for continuing work without repeating the same query.
             </div>
             <div class="flex flex-wrap gap-3">
               <button id="loadSearchHistoryBtn" class="rounded-2xl bg-cyan-600 hover:bg-cyan-500 px-4 py-3 font-medium">Load Search History</button>
@@ -467,7 +471,6 @@
     const state = {
       lastResponse: null,
       lastQuery: "",
-      apiHealthy: null,
     };
 
     const TRUSTED_SITES = [
@@ -617,9 +620,7 @@
 
     const els = {
       pingApiBtn: document.getElementById("pingApiBtn"),
-      apiStatusBadge: document.getElementById("apiStatusBadge"),
 
-      dashboardApiStatus: document.getElementById("dashboardApiStatus"),
       dashboardLastQuery: document.getElementById("dashboardLastQuery"),
       dashboardSelectedSources: document.getElementById("dashboardSelectedSources"),
       dashboardAmbiguous: document.getElementById("dashboardAmbiguous"),
@@ -682,7 +683,9 @@
     }
 
     function setStatus(message) {
-      els.dashboardStatusLog.textContent = message;
+      if (els.dashboardStatusLog) {
+        els.dashboardStatusLog.textContent = message;
+      }
     }
 
     function pretty(obj) {
@@ -871,18 +874,7 @@
     function updateConfigView() {}
 
     function updateApiStatus(healthy, message = "") {
-      state.apiHealthy = healthy;
-      els.dashboardApiStatus.textContent = healthy === true ? "Healthy" : healthy === false ? "Unavailable" : "Unknown";
-      if (els.apiStatusBadge) {
-        els.apiStatusBadge.textContent = healthy === true ? "Healthy" : healthy === false ? "Unavailable" : "Not checked";
-        els.apiStatusBadge.className = `text-xs px-3 py-1 rounded-full border ${
-          healthy === true
-            ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
-            : healthy === false
-            ? "border-rose-500/30 text-rose-300 bg-rose-500/10"
-            : "border-slate-700 text-slate-400"
-        }`;
-      }
+      void healthy;
       if (message) setStatus(message);
     }
 
@@ -947,8 +939,7 @@
               <a href="${item.url}" target="_blank" class="font-semibold text-cyan-300 hover:text-cyan-200">${escapeHtml(item.title || "Untitled")}</a>
             </div>
             <div class="text-right text-xs text-slate-400 shrink-0">
-              ${item.score !== undefined ? `<div>score: ${Number(item.score).toFixed(3)}</div>` : ""}
-              ${item.rerank_score !== undefined ? `<div>rank: ${Number(item.rerank_score).toFixed(3)}</div>` : ""}
+              <div>Result ${index + 1}</div>
             </div>
           </div>
           <div class="text-xs text-slate-500 mb-3 flex items-center gap-2">${icon}<span>${escapeHtml(item.source || "unknown source")}</span></div>
@@ -978,7 +969,7 @@
               ${meaning}
               <a href="${item.url}" target="_blank" class="font-semibold text-fuchsia-300 hover:text-fuchsia-200">${escapeHtml(item.title || "Untitled")}</a>
             </div>
-            ${item.rerank_score !== undefined ? `<div class="text-xs text-slate-400">rank: ${Number(item.rerank_score).toFixed(3)}</div>` : ""}
+            <div class="text-xs text-slate-400">Source pick</div>
           </div>
           <div class="text-sm text-slate-400 flex items-center gap-2">${icon}<span>${escapeHtml(item.source || "unknown source")}</span></div>
         `;
@@ -1002,7 +993,7 @@
           <div class="rounded-xl bg-slate-900 border border-slate-800 p-3 mt-3">
             <div class="flex items-start justify-between gap-4 mb-2">
               <a href="${item.url}" target="_blank" class="font-medium text-cyan-300 hover:text-cyan-200">${escapeHtml(item.title || "Untitled")}</a>
-              ${item.rerank_score !== undefined ? `<div class="text-xs text-slate-400">rank: ${Number(item.rerank_score).toFixed(3)}</div>` : ""}
+              <div class="text-xs text-slate-400">Result</div>
             </div>
             <div class="text-xs text-slate-500 mb-2 flex items-center gap-2">${faviconHtml(item, "w-3.5 h-3.5")}<span>${escapeHtml(item.source || "unknown source")}</span></div>
             ${item.snippet ? `<div class="text-sm text-slate-300 leading-relaxed">${escapeHtml(item.snippet)}</div>` : ""}
@@ -1015,7 +1006,7 @@
               <div class="font-semibold">${escapeHtml(group.meaning || "Unknown meaning")}</div>
               <div class="text-xs text-slate-500 mt-1">${(group.results || []).length} result(s)</div>
             </div>
-            <div class="text-xs text-slate-400">top: ${group.top_score !== undefined ? Number(group.top_score).toFixed(3) : "-"}</div>
+            <div class="text-xs text-slate-400">Grouped by meaning</div>
           </summary>
           <div class="mt-2">${resultsHtml}</div>
         `;
@@ -1042,8 +1033,7 @@
               <a href="${item.url}" target="_blank" class="font-semibold text-cyan-300 hover:text-cyan-200">${escapeHtml(item.title || "Untitled")}</a>
             </div>
             <div class="text-right text-xs text-slate-400 shrink-0">
-              ${item.score !== undefined ? `<div>score: ${Number(item.score).toFixed(3)}</div>` : ""}
-              ${item.rerank_score !== undefined ? `<div>rank: ${Number(item.rerank_score).toFixed(3)}</div>` : ""}
+              <div>Result ${index + 1}</div>
             </div>
           </div>
           <div class="text-sm text-slate-400 flex items-center gap-2">${icon}<span>${escapeHtml(item.source || "unknown source")}</span></div>
@@ -1102,7 +1092,7 @@
         if (type === "search") {
           card.innerHTML = `
             <div class="font-medium mb-1">${escapeHtml(item.query || "-")}</div>
-            <div class="text-sm text-slate-400 mb-2">topic: ${escapeHtml(item.topic || "-")} · provider: ${escapeHtml(item.provider || "-")}</div>
+            <div class="text-sm text-slate-400 mb-2">topic: ${escapeHtml(item.topic || "-")}</div>
             <div class="text-sm text-slate-300 mb-2">results: ${item.result_count ?? 0}</div>
             ${item.answer ? `<div class="text-sm text-slate-400 line-clamp-4">${escapeHtml(item.answer)}</div>` : ""}
           `;
@@ -1180,7 +1170,7 @@
           || (points.length ? points.map(p => `- ${p}`).join("\n") : "No summary returned.");
         const responseTime = typeof data.response_time === "number" ? `${data.response_time.toFixed(2)}s` : "-";
         els.researchTopMeta.textContent =
-          `Query: ${data.query || "-"} · Topic: ${data.topic || "-"} · Provider: ${data.provider || "-"} · Request ID: ${data.request_id || "-"} · Time: ${responseTime}`;
+          `Query: ${data.query || "-"} · Topic: ${data.topic || "-"} · Time: ${responseTime}`;
         els.researchAmbiguousBadge.textContent = data.ambiguous ? "Yes" : "No";
         els.researchSourceCount.textContent = String(data.source_count ?? 0);
         els.researchSelectedCount.textContent = String((data.selected_sources || []).length);
