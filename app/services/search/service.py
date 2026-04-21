@@ -104,9 +104,10 @@ class SearchService:
     async def run_search(self, request: SearchRequest, session_id: str | None = None) -> dict:
         """Execute search and return results."""
         include_domains = request.include_domains or smart_select_domains(
-            query=request.query,
-            topic=request.topic,
-            top_n=50,
+            request.query,
+            request.topic,
+            request.language,
+            50,
         )
 
         primary_payload = await self.provider.search(
@@ -153,9 +154,10 @@ class SearchService:
             results = self._merge_results(primary_results, disambiguation_results["results"])
 
         results = rerank_results(
-            query=request.query,
-            topic=request.topic,
-            results=results,
+            request.query,
+            request.topic,
+            results,
+            request.language,
         )
 
         meaning_input = self._meaning_input_results(request.query, results)

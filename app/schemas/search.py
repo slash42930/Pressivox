@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 class SearchRequest(BaseModel):
     query: str = Field(min_length=2, max_length=500)
     topic: Literal["general", "news", "finance"] = "general"
+    language: Literal["english", "romanian"] = "english"
     max_results: int = Field(default=8, ge=1, le=20)
 
     summarize: bool = False

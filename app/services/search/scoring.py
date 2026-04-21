@@ -4,11 +4,7 @@ import re
 from datetime import datetime, timezone
 
 from .text_processing import host_root, normalize_text, query_terms
-from .title_analysis import (
-    extract_comma_meaning,
-    extract_parenthetical_meaning,
-    is_exact_base_topic,
-)
+from .title_analysis import extract_comma_meaning, extract_parenthetical_meaning, is_exact_base_topic
 
 
 TRUSTED_GENERAL = {
@@ -55,6 +51,22 @@ TRUST_SCORE_BY_DOMAIN = {
     "cam.ac.uk": 20,
 }
 
+TRUST_SCORE_RO_BY_DOMAIN = {
+    "digi24.ro": 19,
+    "hotnews.ro": 19,
+    "g4media.ro": 18,
+    "romania-insider.com": 16,
+    "adevarul.ro": 16,
+    "stirileprotv.ro": 18,
+    "biziday.ro": 17,
+    "libertatea.ro": 14,
+    "mediafax.ro": 15,
+    "zf.ro": 17,
+    "economica.net": 16,
+    "profit.ro": 16,
+    "bursa.ro": 15,
+}
+
 TOPIC_DOMAIN_HINTS = {
     "news": {
         "reuters.com",
@@ -76,6 +88,26 @@ TOPIC_DOMAIN_HINTS = {
     },
 }
 
+TOPIC_DOMAIN_HINTS_RO = {
+    "news": {
+        "digi24.ro",
+        "hotnews.ro",
+        "g4media.ro",
+        "stirileprotv.ro",
+        "mediafax.ro",
+        "adevarul.ro",
+        "biziday.ro",
+        "romania-insider.com",
+    },
+    "general": {
+        "wikipedia.org",
+        "digi24.ro",
+        "hotnews.ro",
+        "romania-insider.com",
+        "adevarul.ro",
+    },
+}
+
 QUERY_INTENT_HINTS = {
     "football": {"bbc.com", "espn.com", "uefa.com", "fifa.com", "theathletic.com", "goal.com"},
     "soccer": {"bbc.com", "espn.com", "uefa.com", "fifa.com", "theathletic.com", "goal.com"},
@@ -86,6 +118,14 @@ QUERY_INTENT_HINTS = {
     "inflation": {"ft.com", "economist.com", "wsj.com", "bloomberg.com", "imf.org", "oecd.org"},
     "ai": {"openai.com", "mit.edu", "stanford.edu", "nature.com", "science.org"},
     "health": {"who.int", "cdc.gov", "nejm.org", "thelancet.com", "nature.com"},
+}
+
+QUERY_INTENT_HINTS_RO = {
+    "fotbal": {"digi24.ro", "hotnews.ro", "g4media.ro", "stirileprotv.ro", "adevarul.ro"},
+    "romania": {"digi24.ro", "hotnews.ro", "g4media.ro", "stirileprotv.ro", "mediafax.ro"},
+    "economie": {"zf.ro", "economica.net", "profit.ro", "bursa.ro", "hotnews.ro"},
+    "inflatie": {"zf.ro", "economica.net", "profit.ro", "bursa.ro", "hotnews.ro"},
+    "politica": {"digi24.ro", "hotnews.ro", "g4media.ro", "adevarul.ro"},
 }
 
 TOPIC_SCORE_WEIGHTS = {
@@ -122,42 +162,16 @@ TOPIC_SCORE_WEIGHTS = {
 }
 
 
+def normalize_language(language: str | None) -> str:
+    """Normalize language flag to supported values."""
+    value = (language or "english").strip().lower()
+    return "romanian" if value == "romanian" else "english"
+
+
 def get_topic_weights(topic: str) -> dict[str, float]:
     """Return score weighting profile for the given topic."""
     key = (topic or "").strip().lower()
     return TOPIC_SCORE_WEIGHTS.get(key, TOPIC_SCORE_WEIGHTS["general"])
-
-
-def smart_select_domains(query: str, topic: str, top_n: int = 50) -> list[str]:
-    """Infer a trusted+relevant include-domain list for the given topic/query."""
-    topic_key = (topic or "").strip().lower()
-    terms = query_terms(query)
-
-    candidates: set[str] = set(TRUSTED_GENERAL) | set(TRUST_SCORE_BY_DOMAIN)
-    for domains in TOPIC_DOMAIN_HINTS.values():
-        candidates.update(domains)
-    for domains in QUERY_INTENT_HINTS.values():
-        candidates.update(domains)
-
-    ranked: list[tuple[str, float]] = []
-    for domain in candidates:
-        score = float(TRUST_SCORE_BY_DOMAIN.get(domain, 0))
-        score += float(TRUSTED_GENERAL.get(domain, 0)) * 0.6
-
-        if topic_key in TOPIC_DOMAIN_HINTS and domain in TOPIC_DOMAIN_HINTS[topic_key]:
-            score += 14.0
-
-        for term in terms:
-            if domain in QUERY_INTENT_HINTS.get(term, set()):
-                score += 7.0
-
-        if term_related_domain(term=topic_key, domain=domain):
-            score += 3.0
-
-        ranked.append((domain, score))
-
-    ranked.sort(key=lambda x: (x[1], x[0]), reverse=True)
-    return [domain for domain, _ in ranked[:top_n]]
 
 
 def term_related_domain(term: str, domain: str) -> bool:
@@ -168,10 +182,65 @@ def term_related_domain(term: str, domain: str) -> bool:
     return term in root_token or root_token in term
 
 
+def get_topic_domain_hints(topic: str, language: str) -> set[str]:
+    """Return topic-specific preferred domains by language."""
+    key = (topic or "").strip().lower()
+    if normalize_language(language) == "romanian":
+        return TOPIC_DOMAIN_HINTS_RO.get(key, set())
+    return TOPIC_DOMAIN_HINTS.get(key, set())
+
+
+def get_query_intent_hints(language: str) -> dict[str, set[str]]:
+    """Return query intent hint map by language."""
+    return QUERY_INTENT_HINTS_RO if normalize_language(language) == "romanian" else QUERY_INTENT_HINTS
+
+
+def smart_select_domains(query: str, topic: str, language: str = "english", top_n: int = 50) -> list[str]:
+    """Infer a trusted+relevant include-domain list for the given topic/query."""
+    lang = normalize_language(language)
+    topic_key = (topic or "").strip().lower()
+    terms = query_terms(query)
+
+    candidates: set[str] = set(TRUSTED_GENERAL) | set(TRUST_SCORE_BY_DOMAIN)
+    if lang == "romanian":
+        candidates.update(TRUST_SCORE_RO_BY_DOMAIN)
+
+    topic_hint_pool = TOPIC_DOMAIN_HINTS_RO if lang == "romanian" else TOPIC_DOMAIN_HINTS
+    for domains in topic_hint_pool.values():
+        candidates.update(domains)
+
+    query_hint_pool = QUERY_INTENT_HINTS_RO if lang == "romanian" else QUERY_INTENT_HINTS
+    for domains in query_hint_pool.values():
+        candidates.update(domains)
+
+    ranked: list[tuple[str, float]] = []
+    for domain in candidates:
+        score = float(TRUST_SCORE_BY_DOMAIN.get(domain, 0))
+        score += float(TRUST_SCORE_RO_BY_DOMAIN.get(domain, 0))
+        score += float(TRUSTED_GENERAL.get(domain, 0)) * 0.6
+
+        if topic_key in topic_hint_pool and domain in topic_hint_pool[topic_key]:
+            score += 14.0
+
+        for term in terms:
+            if domain in query_hint_pool.get(term, set()):
+                score += 7.0
+
+        if term_related_domain(term=topic_key, domain=domain):
+            score += 3.0
+
+        if lang == "romanian":
+            score += 6.0 if domain.endswith(".ro") else -2.0
+
+        ranked.append((domain, score))
+
+    ranked.sort(key=lambda x: (x[1], x[0]), reverse=True)
+    return [domain for domain, _ in ranked[:top_n]]
+
+
 def domain_bonus(topic: str, source: str) -> int:
     """Calculate domain trust bonus based on source."""
-    del topic  # current project only needs one trust map for this use-case
-
+    del topic
     root = host_root(source)
     for domain, bonus in TRUSTED_GENERAL.items():
         if root == domain or root.endswith(f".{domain}"):
@@ -179,29 +248,58 @@ def domain_bonus(topic: str, source: str) -> int:
     return 0
 
 
-def domain_trust_score(source: str) -> int:
+def domain_trust_score(source: str, language: str = "english") -> int:
     """Return trustworthiness score based on known domain quality."""
     root = host_root(source)
-    for domain, score in TRUST_SCORE_BY_DOMAIN.items():
+    lang = normalize_language(language)
+
+    trust_map = dict(TRUST_SCORE_BY_DOMAIN)
+    if lang == "romanian":
+        trust_map.update(TRUST_SCORE_RO_BY_DOMAIN)
+
+    for domain, score in trust_map.items():
         if root == domain or root.endswith(f".{domain}"):
             return score
+
+    if lang == "romanian" and root.endswith(".ro"):
+        return 8
+
+    if lang == "english" and not root.endswith(".ro"):
+        return 2
+
     return 0
 
 
-def topical_domain_relevance(topic: str, query: str, source: str) -> int:
+def language_domain_alignment(source: str, language: str) -> int:
+    """Reward domains aligned with selected language."""
+    root = host_root(source)
+    lang = normalize_language(language)
+
+    if lang == "romanian":
+        if root.endswith(".ro"):
+            return 10
+        if root in TRUST_SCORE_RO_BY_DOMAIN:
+            return 12
+        return -4
+
+    if root.endswith(".ro"):
+        return -2
+    return 4
+
+
+def topical_domain_relevance(topic: str, query: str, source: str, language: str = "english") -> int:
     """Boost results whose source domain is relevant to topic and query intent."""
     score = 0
     root = host_root(source)
 
-    topic_key = (topic or "").strip().lower()
-    if topic_key in TOPIC_DOMAIN_HINTS:
-        for domain in TOPIC_DOMAIN_HINTS[topic_key]:
-            if root == domain or root.endswith(f".{domain}"):
-                score += 12
-                break
+    for domain in get_topic_domain_hints(topic, language):
+        if root == domain or root.endswith(f".{domain}"):
+            score += 12
+            break
 
+    query_hint_map = get_query_intent_hints(language)
     for term in query_terms(query):
-        for domain in QUERY_INTENT_HINTS.get(term, set()):
+        for domain in query_hint_map.get(term, set()):
             if root == domain or root.endswith(f".{domain}"):
                 score += 6
                 break
@@ -445,7 +543,7 @@ def commercial_page_penalty(query: str, item: dict) -> int:
     return penalty
 
 
-def rerank_results(query: str, topic: str, results: list[dict]) -> list[dict]:
+def rerank_results(query: str, topic: str, results: list[dict], language: str = "english") -> list[dict]:
     """Rerank search results based on scoring criteria."""
     reranked = []
     weights = get_topic_weights(topic)
@@ -458,8 +556,9 @@ def rerank_results(query: str, topic: str, results: list[dict]) -> list[dict]:
         final_score = (
             (provider_score * 100 * weights["provider"])
             + (domain_bonus(topic, source) * weights["domain_bonus"])
-            + (domain_trust_score(source) * weights["trust"])
-            + (topical_domain_relevance(topic, query, source) * weights["topic_relevance"])
+            + (domain_trust_score(source, language=language) * weights["trust"])
+            + language_domain_alignment(source, language=language)
+            + (topical_domain_relevance(topic, query, source, language=language) * weights["topic_relevance"])
             + (content_relevance_score(query, item) * weights["content"])
             + (freshness_score(topic, item) * weights["freshness"])
             + (title_match_bonus(query, title) * weights["title_match"])

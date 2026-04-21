@@ -165,6 +165,13 @@
                     </select>
                   </div>
                   <div>
+                    <label for="searchLanguage" class="block text-sm text-slate-300 mb-2">Language</label>
+                    <select id="searchLanguage" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
+                      <option value="english" selected>english</option>
+                      <option value="romanian">romanian</option>
+                    </select>
+                  </div>
+                  <div>
                     <label for="searchMaxResults" class="block text-sm text-slate-300 mb-2">Max Results</label>
                     <input id="searchMaxResults" type="number" min="1" max="20" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="5" />
                   </div>
@@ -262,6 +269,13 @@
                     <select id="researchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
                       <option value="general" selected>general</option>
                       <option value="news">news</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="researchLanguage" class="block text-sm text-slate-300 mb-2">Language</label>
+                    <select id="researchLanguage" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
+                      <option value="english" selected>english</option>
+                      <option value="romanian">romanian</option>
                     </select>
                   </div>
                   <div>
@@ -698,17 +712,14 @@
 
     function getEffectiveIncludeDomains(prefix) {
       const includeEl = document.getElementById(`${prefix}IncludeDomains`);
-      const topicEl = document.getElementById(`${prefix}Topic`);
-      const queryEl = document.getElementById(`${prefix}Query`);
 
       const manual = parseDomains(includeEl?.value || "");
       if (manual.length > 0) {
         return uniqueDomains(manual);
       }
 
-      const topic = topicEl?.value || "";
-      const query = queryEl?.value || "";
-      return getTrustedSitesForTopic(topic, query, 50);
+      // Backend performs silent top-domain inference by language/topic when this is empty.
+      return [];
     }
 
     function tokenizeContext(text = "") {
@@ -1109,6 +1120,7 @@
         const body = {
           query: document.getElementById("searchQuery").value,
           topic: document.getElementById("searchTopic").value,
+          language: document.getElementById("searchLanguage").value,
           max_results: Number(document.getElementById("searchMaxResults").value),
           summarize: true,
           extract_top_results: true,
@@ -1141,6 +1153,7 @@
         const body = {
           query: document.getElementById("researchQuery").value,
           topic: document.getElementById("researchTopic").value,
+          language: document.getElementById("researchLanguage").value,
           max_results: Number(document.getElementById("researchMaxResults").value),
           summarize: true,
           extract_top_results: true,
@@ -1294,6 +1307,7 @@
             activateTab("search");
             document.getElementById("searchQuery").value = btn.dataset.query || "";
             document.getElementById("searchTopic").value = btn.dataset.topic || "general";
+            document.getElementById("searchLanguage").value = "english";
             document.getElementById("searchIncludeDomains").value = btn.dataset.include || "";
           }
 
@@ -1301,6 +1315,7 @@
             activateTab("research");
             document.getElementById("researchQuery").value = btn.dataset.query || "";
             document.getElementById("researchTopic").value = btn.dataset.topic || "general";
+            document.getElementById("researchLanguage").value = "english";
             document.getElementById("researchIncludeDomains").value = btn.dataset.include || "";
           }
 
@@ -1324,6 +1339,7 @@
       els.searchWikipediaPreset.addEventListener("click", () => {
         document.getElementById("searchQuery").value = "artificial intelligence";
         document.getElementById("searchTopic").value = "general";
+        document.getElementById("searchLanguage").value = "english";
         document.getElementById("searchMaxResults").value = "5";
         document.getElementById("searchIncludeDomains").value = "wikipedia.org";
         document.getElementById("searchExcludeDomains").value = "";
@@ -1336,6 +1352,7 @@
       els.searchNewsPreset.addEventListener("click", () => {
         document.getElementById("searchQuery").value = "latest AI news";
         document.getElementById("searchTopic").value = "news";
+        document.getElementById("searchLanguage").value = "english";
         document.getElementById("searchMaxResults").value = "5";
         document.getElementById("searchIncludeDomains").value = "reuters.com,bbc.com,apnews.com";
         document.getElementById("searchExcludeDomains").value = "";
@@ -1348,6 +1365,7 @@
       els.researchAIPreset.addEventListener("click", () => {
         document.getElementById("researchQuery").value = "artificial intelligence";
         document.getElementById("researchTopic").value = "general";
+        document.getElementById("researchLanguage").value = "english";
         document.getElementById("researchMaxResults").value = "5";
         document.getElementById("researchIncludeDomains").value = "wikipedia.org";
         document.getElementById("researchExcludeDomains").value = "";
@@ -1360,6 +1378,7 @@
       els.researchAmbiguousPreset.addEventListener("click", () => {
         document.getElementById("researchQuery").value = "Mercury";
         document.getElementById("researchTopic").value = "general";
+        document.getElementById("researchLanguage").value = "english";
         document.getElementById("researchMaxResults").value = "5";
         document.getElementById("researchIncludeDomains").value = "wikipedia.org";
         document.getElementById("researchExcludeDomains").value = "";
