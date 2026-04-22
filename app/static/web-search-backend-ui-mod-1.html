@@ -120,6 +120,15 @@
               <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="space exploration news">Space</button>
               <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="cybersecurity threats">Security</button>
             </div>
+            <!-- chip action row: appears when a chip is selected -->
+            <div id="chipActionRow" class="overflow-hidden" style="max-height:0;opacity:0;transition:max-height 0.32s cubic-bezier(0.4,0,0.2,1),opacity 0.25s ease;">
+              <div class="flex items-center gap-3 mt-3 pt-3 border-t border-slate-800">
+                <span class="text-sm text-slate-400">Run <strong id="chipActionLabel" class="text-white"></strong> as:</span>
+                <button id="chipActionSearch" class="rounded-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 px-5 py-2 text-sm font-semibold shadow-lg shadow-cyan-900/40 transition-all duration-200 hover:scale-105 active:scale-95">🔍 Search</button>
+                <button id="chipActionResearch" class="rounded-full bg-gradient-to-r from-fuchsia-600 to-fuchsia-500 hover:from-fuchsia-500 hover:to-fuchsia-400 px-5 py-2 text-sm font-semibold shadow-lg shadow-fuchsia-900/40 transition-all duration-200 hover:scale-105 active:scale-95">🔬 Research</button>
+                <button id="chipActionClose" class="ml-auto w-7 h-7 rounded-full flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-700 transition text-sm leading-none">✕</button>
+              </div>
+            </div>
           </div>
 
           <!-- Session stats row -->
@@ -2318,13 +2327,40 @@
           if (e.key === "Enter" && dashSearchBtn) dashSearchBtn.click();
         });
       }
+      let _activeChipQ = "";
+      function _closeChipRow() {
+        const row = document.getElementById("chipActionRow");
+        if (row) { row.style.maxHeight = "0"; row.style.opacity = "0"; }
+        document.querySelectorAll(".dash-chip").forEach(c =>
+          c.classList.remove("border-cyan-500","text-cyan-300","bg-slate-800","shadow-md","shadow-cyan-500/20"));
+        _activeChipQ = "";
+      }
       document.querySelectorAll(".dash-chip").forEach(chip => {
         chip.addEventListener("click", () => {
           const q = chip.dataset.q || "";
-          if (dashInput) dashInput.value = q;
-          if (dashSearchBtn) dashSearchBtn.click();
+          const label = chip.textContent.trim();
+          const row = document.getElementById("chipActionRow");
+          const labelEl = document.getElementById("chipActionLabel");
+          if (_activeChipQ === q) { _closeChipRow(); return; }
+          _activeChipQ = q;
+          document.querySelectorAll(".dash-chip").forEach(c =>
+            c.classList.remove("border-cyan-500","text-cyan-300","bg-slate-800","shadow-md","shadow-cyan-500/20"));
+          chip.classList.add("border-cyan-500","text-cyan-300","bg-slate-800","shadow-md","shadow-cyan-500/20");
+          if (labelEl) labelEl.textContent = label;
+          if (row) { row.style.maxHeight = "72px"; row.style.opacity = "1"; }
         });
       });
+      document.getElementById("chipActionSearch")?.addEventListener("click", () => {
+        if (dashInput) dashInput.value = _activeChipQ;
+        _closeChipRow();
+        if (dashSearchBtn) dashSearchBtn.click();
+      });
+      document.getElementById("chipActionResearch")?.addEventListener("click", () => {
+        if (dashInput) dashInput.value = _activeChipQ;
+        _closeChipRow();
+        if (dashResearchBtn) dashResearchBtn.click();
+      });
+      document.getElementById("chipActionClose")?.addEventListener("click", _closeChipRow);
       els.searchBtn.addEventListener("click", runSearch);
       els.searchAnalyzeBtn.addEventListener("click", analyzeSearchQuery);
       els.researchBtn.addEventListener("click", runResearch);
