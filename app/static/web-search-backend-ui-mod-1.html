@@ -23,6 +23,20 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    @keyframes dashboard-ticker-scroll {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .dashboard-ticker-wrap {
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+    }
+    .dashboard-ticker-text {
+      display: inline-block;
+      padding-left: 100%;
+      animation: dashboard-ticker-scroll 16s linear infinite;
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-slate-100 min-h-screen">
@@ -56,6 +70,7 @@
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="research">Research</button>
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="advanced-research">Advanced Research</button>
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="extract">Extract</button>
+            <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="info">Info</button>
             <div class="border-t border-slate-700 my-2"></div>
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="histories">Histories</button>
           </nav>
@@ -88,6 +103,9 @@
               </div>
             </div>
             <div id="dashboardStatusLog" class="rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">Ready.</div>
+            <div class="mt-4 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-cyan-200 dashboard-ticker-wrap">
+              <div id="dashboardTickerText" class="dashboard-ticker-text">Search signals, compare sources, and keep moving.</div>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
@@ -127,6 +145,27 @@
 
           <div class="grid grid-cols-1 gap-6">
             <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
+              <div class="flex items-center justify-between gap-4 mb-4">
+                <div>
+                  <h2 class="text-2xl font-semibold">Top News of the Week</h2>
+                  <p class="text-slate-400">Top 3 English and Top 3 Romanian headlines ranked from existing domains by global view-weighted signals.</p>
+                </div>
+                <button id="dashboardRefreshTopNews" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-sm font-medium">Refresh</button>
+              </div>
+              <div id="dashboardTopNewsMeta" class="text-sm text-slate-400 mb-4">Loading weekly headlines...</div>
+              <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
+                  <h3 class="text-lg font-semibold mb-3">Top 3 English</h3>
+                  <div id="dashboardTopNewsEnglish" class="space-y-3"></div>
+                </div>
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
+                  <h3 class="text-lg font-semibold mb-3">Top 3 Romanian</h3>
+                  <div id="dashboardTopNewsRomanian" class="space-y-3"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
               <div class="flex items-center justify-between mb-4 gap-4">
                 <div>
                   <h2 class="text-2xl font-semibold">Quick start</h2>
@@ -154,6 +193,49 @@
               </div>
             </div>
 
+          </div>
+        </section>
+
+        <!-- INFO -->
+        <section id="tab-info" class="tab-panel hidden">
+          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-2">Product Guide</h2>
+            <p class="text-slate-400">This page explains what each area does and how to get better results faster.</p>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
+              <h3 class="text-xl font-semibold mb-4">Core Features</h3>
+              <ul class="space-y-3 text-slate-300 text-sm">
+                <li><strong>Search:</strong> Finds sources quickly, adds diagnostics, and supports sorting plus side-by-side compare.</li>
+                <li><strong>Research:</strong> Produces structured summaries, selected sources, and meaning groups for ambiguous topics.</li>
+                <li><strong>Advanced Research:</strong> Submits async research tasks and polls long-running jobs.</li>
+                <li><strong>Extract:</strong> Pulls full page content plus important passages for fast review.</li>
+                <li><strong>Histories:</strong> Reloads session search and extract history cards for continuity.</li>
+              </ul>
+            </div>
+
+            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
+              <h3 class="text-xl font-semibold mb-4">How To Work Faster</h3>
+              <ul class="space-y-3 text-slate-300 text-sm">
+                <li>Use <strong>Analyze Query</strong> before searching if your query is short or broad.</li>
+                <li>Keep <strong>Include Domains</strong> empty unless you need strict source control.</li>
+                <li>Use compare buttons on cards to keep only the strongest 2-3 sources visible.</li>
+                <li>Run Research when you need synthesized context, not just raw links.</li>
+                <li>Use Dashboard activity and pulse for action metrics, not connection telemetry.</li>
+              </ul>
+            </div>
+
+            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 xl:col-span-2">
+              <h3 class="text-xl font-semibold mb-4">What Analyzer Does</h3>
+              <p class="text-sm text-slate-300 mb-3">Analyzer is a lightweight pre-search helper. It does not fetch web results. It checks query clarity and gives guidance so your next search call is cleaner.</p>
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-sm">
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3"><span class="text-slate-400">token_count</span><div class="text-slate-200 mt-1">How dense your query is.</div></div>
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3"><span class="text-slate-400">is_short_query</span><div class="text-slate-200 mt-1">Flags terse inputs.</div></div>
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3"><span class="text-slate-400">ambiguous_likely</span><div class="text-slate-200 mt-1">Signals multi-meaning intent.</div></div>
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3"><span class="text-slate-400">suggested_queries</span><div class="text-slate-200 mt-1">Offers better query rewrites.</div></div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -744,6 +826,53 @@
       "smithsonianmag.com": ["animals", "science", "history", "culture"]
     };
 
+    const ROMANIAN_NEWS_DOMAINS = [
+      "digi24.ro",
+      "hotnews.ro",
+      "g4media.ro",
+      "stirileprotv.ro",
+      "mediafax.ro",
+      "adevarul.ro",
+      "biziday.ro",
+      "romania-insider.com",
+      "zf.ro",
+      "economica.net",
+      "profit.ro",
+      "bursa.ro"
+    ];
+
+    const DOMAIN_VIEW_WEIGHT = {
+      "bbc.com": 100,
+      "nytimes.com": 94,
+      "theguardian.com": 88,
+      "reuters.com": 82,
+      "apnews.com": 78,
+      "washingtonpost.com": 74,
+      "wsj.com": 70,
+      "ft.com": 60,
+      "cnbc.com": 58,
+      "bloomberg.com": 57,
+      "npr.org": 52,
+      "aljazeera.com": 50,
+      "time.com": 49,
+      "france24.com": 44,
+      "dw.com": 43,
+      "economist.com": 41,
+
+      "digi24.ro": 38,
+      "hotnews.ro": 36,
+      "stirileprotv.ro": 34,
+      "adevarul.ro": 31,
+      "g4media.ro": 29,
+      "mediafax.ro": 27,
+      "biziday.ro": 24,
+      "romania-insider.com": 19,
+      "zf.ro": 16,
+      "economica.net": 15,
+      "profit.ro": 14,
+      "bursa.ro": 13,
+    };
+
     const TOKEN_ALIASES = {
       football: ["soccer", "fifa", "uefa", "premierleague"],
       soccer: ["football", "fifa", "uefa"],
@@ -782,6 +911,11 @@
       dashboardLoadHistories: document.getElementById("dashboardLoadHistories"),
       dashboardClearActivity: document.getElementById("dashboardClearActivity"),
       dashboardActivityList: document.getElementById("dashboardActivityList"),
+      dashboardTickerText: document.getElementById("dashboardTickerText"),
+      dashboardRefreshTopNews: document.getElementById("dashboardRefreshTopNews"),
+      dashboardTopNewsMeta: document.getElementById("dashboardTopNewsMeta"),
+      dashboardTopNewsEnglish: document.getElementById("dashboardTopNewsEnglish"),
+      dashboardTopNewsRomanian: document.getElementById("dashboardTopNewsRomanian"),
       dashboardLastAction: document.getElementById("dashboardLastAction"),
       dashboardSearchRuns: document.getElementById("dashboardSearchRuns"),
       dashboardResearchRuns: document.getElementById("dashboardResearchRuns"),
@@ -859,6 +993,13 @@
       extractRuns: 0,
       lastAction: "Ready",
       activity: [],
+      dashboardTickerIndex: -1,
+      dashboardTickerTimer: null,
+      topNews: {
+        english: [],
+        romanian: [],
+        lastUpdated: "",
+      },
     };
 
     function storageKey(key) {
@@ -887,14 +1028,50 @@
       return created;
     }
 
-    function setStatus(message) {
+    function setStatus(message, options = {}) {
+      const { recordActivity = true } = options;
       const stamp = new Date().toLocaleTimeString();
       state.lastAction = `${stamp} - ${message}`;
       if (els.dashboardStatusLog) {
         els.dashboardStatusLog.textContent = message;
       }
-      pushDashboardActivity(message);
+      if (recordActivity) {
+        pushDashboardActivity(message);
+      }
       refreshDashboardPulse();
+      rotateDashboardTicker(true);
+    }
+
+    function buildDashboardTickerMessages() {
+      const comparedCount = (state.searchCompare?.length || 0) + (state.researchCompare?.length || 0);
+      const totalRuns = state.searchRuns + state.researchRuns + state.extractRuns;
+      return [
+        "Use Quick Start to launch a flow in one click.",
+        "Analyze Query helps clarify short or ambiguous search intent.",
+        `Session runs so far: ${totalRuns}.`,
+        `Compared items active: ${comparedCount}.`,
+        state.lastQuery ? `Last searched topic: ${state.lastQuery}.` : "No search query has run yet.",
+        "Use Histories to reopen previous work without retyping prompts.",
+      ];
+    }
+
+    function rotateDashboardTicker(force = false) {
+      if (!els.dashboardTickerText) return;
+      const messages = buildDashboardTickerMessages();
+      if (!messages.length) return;
+
+      state.dashboardTickerIndex = force
+        ? (state.dashboardTickerIndex + 1) % messages.length
+        : (state.dashboardTickerIndex + 1) % messages.length;
+      els.dashboardTickerText.textContent = ` ${messages[state.dashboardTickerIndex]} `;
+    }
+
+    function startDashboardTicker() {
+      if (state.dashboardTickerTimer) {
+        clearInterval(state.dashboardTickerTimer);
+      }
+      rotateDashboardTicker(true);
+      state.dashboardTickerTimer = setInterval(() => rotateDashboardTicker(false), 5500);
     }
 
     function refreshDashboardPulse() {
@@ -947,11 +1124,198 @@
     function clearDashboardActivity() {
       state.activity = [];
       renderDashboardActivity();
-      setStatus("Dashboard activity cleared.");
+      setStatus("Dashboard activity cleared.", { recordActivity: false });
     }
 
     function pretty(obj) {
       return JSON.stringify(obj, null, 2);
+    }
+
+    function normalizeDomain(value = "") {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/^www\./, "")
+        .split("/")[0]
+        .trim();
+    }
+
+    function domainFromResult(item = {}) {
+      const sourceDomain = normalizeDomain(item.source || "");
+      if (sourceDomain) return sourceDomain;
+
+      const urlValue = String(item.url || "");
+      if (!urlValue) return "";
+
+      try {
+        return normalizeDomain(new URL(urlValue).hostname);
+      } catch {
+        return normalizeDomain(urlValue);
+      }
+    }
+
+    function recencyPoints(publishedDate) {
+      if (!publishedDate) return 8;
+      const parsed = new Date(publishedDate);
+      if (Number.isNaN(parsed.getTime())) return 8;
+      const ageDays = Math.max(0, (Date.now() - parsed.getTime()) / (1000 * 60 * 60 * 24));
+      if (ageDays <= 1) return 28;
+      if (ageDays <= 2) return 24;
+      if (ageDays <= 4) return 20;
+      if (ageDays <= 7) return 14;
+      return 6;
+    }
+
+    function providerConfidence(item = {}) {
+      const value = typeof item.rerank_score === "number" ? item.rerank_score : item.score;
+      if (!Number.isFinite(value)) return 0;
+      return Math.max(0, Math.min(30, Number(value) * 6));
+    }
+
+    function viewWeightForDomain(domain, language = "english") {
+      const normalized = normalizeDomain(domain);
+      if (DOMAIN_VIEW_WEIGHT[normalized] != null) {
+        return DOMAIN_VIEW_WEIGHT[normalized];
+      }
+      if (language === "romanian" && normalized.endsWith(".ro")) {
+        return 12;
+      }
+      return 10;
+    }
+
+    function scoreWeeklyHeadline(item, language = "english") {
+      const domain = domainFromResult(item);
+      const view = viewWeightForDomain(domain, language);
+      const freshness = recencyPoints(item.published_date);
+      const confidence = providerConfidence(item);
+      return (view * 0.65) + (freshness * 0.7) + confidence;
+    }
+
+    function pickTopWeeklyHeadlines(results = [], language = "english", limit = 3) {
+      const scored = (Array.isArray(results) ? results : [])
+        .map(item => ({
+          item,
+          domain: domainFromResult(item),
+          rank: scoreWeeklyHeadline(item, language),
+        }))
+        .filter(entry => entry.item && entry.item.url && entry.item.title)
+        .sort((a, b) => b.rank - a.rank);
+
+      const picked = [];
+      const usedDomains = new Set();
+      for (const entry of scored) {
+        if (picked.length >= limit) break;
+        if (entry.domain && usedDomains.has(entry.domain)) continue;
+        picked.push({ ...entry.item, _dashboardRank: entry.rank, _dashboardDomain: entry.domain || "unknown source" });
+        if (entry.domain) usedDomains.add(entry.domain);
+      }
+
+      return picked;
+    }
+
+    function renderTopNewsList(container, items = [], emptyMessage = "No headlines available yet.") {
+      if (!container) return;
+      container.innerHTML = "";
+      if (!items.length) {
+        renderEmpty(container, emptyMessage);
+        return;
+      }
+
+      items.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "rounded-2xl bg-slate-900 border border-slate-800 p-3";
+        const publishedInfo = formatPublishedDate(item.published_date);
+        card.innerHTML = `
+          <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">#${index + 1}</div>
+          <a href="${item.url}" target="_blank" class="font-medium text-cyan-300 hover:text-cyan-200">${escapeHtml(item.title || "Untitled")}</a>
+          <div class="text-xs text-slate-400 mt-2 flex items-center gap-2">${faviconHtml(item, "w-3.5 h-3.5")}<span>${escapeHtml(item._dashboardDomain || item.source || "unknown source")}</span></div>
+          ${publishedInfo ? `<div class="text-xs text-emerald-300 mt-2">${escapeHtml(publishedInfo)}</div>` : ""}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderDashboardTopNews() {
+      renderTopNewsList(els.dashboardTopNewsEnglish, state.topNews.english, "No English weekly headlines yet.");
+      renderTopNewsList(els.dashboardTopNewsRomanian, state.topNews.romanian, "No Romanian weekly headlines yet.");
+      if (els.dashboardTopNewsMeta) {
+        els.dashboardTopNewsMeta.textContent = state.topNews.lastUpdated
+          ? `Last updated: ${state.topNews.lastUpdated}`
+          : "Top weekly headlines are ready when API fetch completes.";
+      }
+    }
+
+    async function fetchWeeklyHeadlines(language = "english") {
+      const isRomanian = language === "romanian";
+      const includeDomains = isRomanian
+        ? ROMANIAN_NEWS_DOMAINS
+        : getTrustedSitesForTopic("news", "global world weekly headlines", 60);
+      const query = isRomanian
+        ? "cele mai importante stiri ale saptamanii in lume"
+        : "top world news of the week";
+
+      const payload = {
+        query,
+        topic: "news",
+        language,
+        max_results: 12,
+        summarize: false,
+        extract_top_results: false,
+        include_domains: includeDomains,
+        exclude_domains: [],
+        search_depth: "advanced",
+        include_answer: false,
+        include_raw_content: false,
+        include_images: false,
+        include_image_descriptions: false,
+        include_favicon: true,
+        exact_match: false,
+        time_range: "week",
+        start_date: null,
+        end_date: null,
+        auto_parameters: true,
+      };
+
+      const data = await api("/search", "POST", payload);
+      const list = Array.isArray(data.results) ? data.results : [];
+      return pickTopWeeklyHeadlines(list, language, 3);
+    }
+
+    async function loadDashboardTopNews(options = {}) {
+      const { silent = false } = options;
+      if (els.dashboardTopNewsMeta) {
+        els.dashboardTopNewsMeta.textContent = "Refreshing weekly top news...";
+      }
+      setLoading(els.dashboardRefreshTopNews, true, "Refreshing...");
+
+      try {
+        const [english, romanian] = await Promise.all([
+          fetchWeeklyHeadlines("english"),
+          fetchWeeklyHeadlines("romanian"),
+        ]);
+
+        state.topNews.english = english;
+        state.topNews.romanian = romanian;
+        state.topNews.lastUpdated = new Date().toLocaleString();
+        renderDashboardTopNews();
+
+        if (!silent) {
+          setStatus("Top weekly news refreshed (EN + RO).", { recordActivity: true });
+        }
+      } catch (err) {
+        state.topNews.english = [];
+        state.topNews.romanian = [];
+        state.topNews.lastUpdated = "";
+        renderDashboardTopNews();
+
+        const message = `Top weekly news refresh failed: ${err.message}`;
+        if (els.dashboardTopNewsMeta) {
+          els.dashboardTopNewsMeta.textContent = message;
+        }
+        setStatus(message, { recordActivity: false });
+      } finally {
+        setLoading(els.dashboardRefreshTopNews, false);
+      }
     }
 
     function parseDomains(value) {
@@ -1131,7 +1495,7 @@
 
     function updateApiStatus(healthy, message = "") {
       void healthy;
-      if (message) setStatus(message);
+      if (message) setStatus(message, { recordActivity: false });
     }
 
     function updateDashboardFromResearch(data) {
@@ -1896,6 +2260,7 @@
         });
       }
       if (els.dashboardClearActivity) els.dashboardClearActivity.addEventListener("click", clearDashboardActivity);
+      if (els.dashboardRefreshTopNews) els.dashboardRefreshTopNews.addEventListener("click", () => loadDashboardTopNews({ silent: false }));
       els.searchBtn.addEventListener("click", runSearch);
       els.searchAnalyzeBtn.addEventListener("click", analyzeSearchQuery);
       els.researchBtn.addEventListener("click", runResearch);
@@ -1987,6 +2352,9 @@
       activateTab(restoreActiveTab());
       updateApiStatus(null, "Connecting to backend...");
       pingApi();
+      startDashboardTicker();
+      renderDashboardTopNews();
+      loadDashboardTopNews({ silent: true });
       renderDashboardActivity();
       refreshDashboardPulse();
       resetSearchUi();

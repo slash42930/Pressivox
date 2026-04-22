@@ -13,3 +13,5 @@ def test_static_mod_ui_is_served() -> None:
     assert "text/html" in response.headers.get("content-type", "")
     assert "Advanced Research" in response.text
     assert "Copy Markdown" in response.text
+    assert "Top News of the Week" in response.text
+    assert "Top 3 Romanian" in response.text
