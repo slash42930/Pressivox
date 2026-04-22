@@ -37,6 +37,17 @@
       padding-left: 100%;
       animation: dashboard-ticker-scroll 16s linear infinite;
     }
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    details.filter-group > summary { list-style: none; }
+    details.filter-group > summary::-webkit-details-marker { display: none; }
+    details.filter-group > summary .arrow { transition: transform 0.2s ease; display: inline-block; }
+    details.filter-group[open] > summary .arrow { transform: rotate(180deg); }
   </style>
 </head>
 <body class="bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-slate-100 min-h-screen">
@@ -245,100 +256,100 @@
               <h2 class="text-2xl font-semibold">Search</h2>
               <p class="text-slate-400">Find relevant results quickly and browse them as clean cards.</p>
             </div>
-            <div class="mb-6 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">
-              Tip: leave Include Domains empty to get automatic source suggestions based on your topic and language.
-            </div>
-
-            <div class="space-y-4">
+            <div class="space-y-3">
               <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-                <h3 class="text-sm font-semibold text-slate-200 mb-3">Query Settings</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   <div class="xl:col-span-2">
-                    <label for="searchQuery" class="block text-sm text-slate-300 mb-2">Query</label>
-                    <input id="searchQuery" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="latest AI news" />
+                    <label for="searchQuery" class="block text-sm text-slate-400 mb-2">What do you want to find?</label>
+                    <input id="searchQuery" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3 text-slate-100 placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition" value="latest AI news" />
                   </div>
                   <div>
-                    <label for="searchTopic" class="block text-sm text-slate-300 mb-2">Topic</label>
-                    <select id="searchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
+                    <label for="searchTopic" class="block text-sm text-slate-400 mb-2">Topic</label>
+                    <select id="searchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3 focus:border-cyan-500 focus:outline-none transition">
                       <option value="general">general</option>
                       <option value="news" selected>news</option>
                     </select>
                   </div>
                   <div>
-                    <label for="searchLanguage" class="block text-sm text-slate-300 mb-2">Language</label>
-                    <select id="searchLanguage" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
+                    <label for="searchLanguage" class="block text-sm text-slate-400 mb-2">Language</label>
+                    <select id="searchLanguage" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3 focus:border-cyan-500 focus:outline-none transition">
                       <option value="english" selected>english</option>
                       <option value="romanian">romanian</option>
                     </select>
                   </div>
                   <div>
-                    <label for="searchMaxResults" class="block text-sm text-slate-300 mb-2">Max Results</label>
-                    <input id="searchMaxResults" type="number" min="1" max="20" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="5" />
+                    <label for="searchMaxResults" class="block text-sm text-slate-400 mb-2">Max Results</label>
+                    <input id="searchMaxResults" type="number" min="1" max="20" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3 focus:border-cyan-500 focus:outline-none transition" value="5" />
                   </div>
                 </div>
               </div>
 
-              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-                <h3 class="text-sm font-semibold text-slate-200 mb-3">Source Filters</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  <div class="xl:col-span-2">
-                    <label for="searchIncludeDomains" class="block text-sm text-slate-300 mb-2">Include Domains (manual)</label>
-                    <input id="searchIncludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="reuters.com,bbc.com" />
-                  </div>
-                  <div>
-                    <label for="searchExcludeDomains" class="block text-sm text-slate-300 mb-2">Exclude Domains</label>
-                    <input id="searchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="example.com" />
+              <details class="filter-group rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden">
+                <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-slate-900 transition">
+                  <span class="text-sm font-semibold text-slate-300">Source Filters</span>
+                  <span class="arrow text-slate-500 text-xs">&#9660;</span>
+                </summary>
+                <div class="px-4 pb-4">
+                  <p class="text-xs text-slate-500 mb-3">Leave Include Domains empty for automatic source suggestions.</p>
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div class="xl:col-span-2">
+                      <label for="searchIncludeDomains" class="block text-sm text-slate-400 mb-2">Include Domains</label>
+                      <input id="searchIncludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="reuters.com,bbc.com" />
+                    </div>
+                    <div>
+                      <label for="searchExcludeDomains" class="block text-sm text-slate-400 mb-2">Exclude Domains</label>
+                      <input id="searchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="example.com" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </details>
 
-              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-                <h3 class="text-sm font-semibold text-slate-200 mb-3">Date Filters</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  <div>
-                    <label for="searchMaxAgeDays" class="block text-sm text-slate-300 mb-2">Max News Age (days)</label>
-                    <input id="searchMaxAgeDays" type="number" min="0" max="3650" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="7" />
-                  </div>
-                  <div>
-                    <label for="searchStartDate" class="block text-sm text-slate-300 mb-2">Start Date</label>
-                    <input id="searchStartDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
-                  </div>
-                  <div>
-                    <label for="searchEndDate" class="block text-sm text-slate-300 mb-2">End Date</label>
-                    <input id="searchEndDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+              <details class="filter-group rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden">
+                <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-slate-900 transition">
+                  <span class="text-sm font-semibold text-slate-300">Date Filters</span>
+                  <span class="arrow text-slate-500 text-xs">&#9660;</span>
+                </summary>
+                <div class="px-4 pb-4">
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div>
+                      <label for="searchMaxAgeDays" class="block text-sm text-slate-400 mb-2">Max News Age (days)</label>
+                      <input id="searchMaxAgeDays" type="number" min="0" max="3650" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="7" />
+                    </div>
+                    <div>
+                      <label for="searchStartDate" class="block text-sm text-slate-400 mb-2">Start Date</label>
+                      <input id="searchStartDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                    </div>
+                    <div>
+                      <label for="searchEndDate" class="block text-sm text-slate-400 mb-2">End Date</label>
+                      <input id="searchEndDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </details>
             </div>
 
-            <div class="flex flex-wrap gap-3 mt-6">
-              <button id="searchBtn" class="rounded-2xl bg-cyan-600 hover:bg-cyan-500 px-4 py-3 font-medium">Run Search</button>
-              <button id="searchAnalyzeBtn" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">Analyze Query</button>
-              <button id="searchNewsPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">News Preset</button>
-              <button id="searchWikipediaPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">Wikipedia Preset</button>
-            </div>
-            <div class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-4">
-              <div>
-                <label for="searchSort" class="block text-sm text-slate-300 mb-2">Sort Results</label>
-                <select id="searchSort" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3">
-                  <option value="relevance" selected>relevance</option>
-                  <option value="date">date</option>
-                  <option value="source">source</option>
-                  <option value="title">title</option>
-                </select>
-              </div>
-              <div class="lg:col-span-3 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">
-                Search state now restores across refreshes in this browser. Use the compare buttons on result cards to build a quick side-by-side view.
-              </div>
+            <div class="flex flex-wrap items-center gap-3 mt-6">
+              <button id="searchBtn" class="rounded-2xl bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 px-6 py-3 font-semibold shadow-lg shadow-cyan-900/30 transition">Run Search</button>
+              <button id="searchAnalyzeBtn" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium transition">Analyze Query</button>
+              <button id="searchNewsPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium transition">News Preset</button>
+              <button id="searchWikipediaPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium transition">Wikipedia Preset</button>
             </div>
           </div>
 
           <div class="grid grid-cols-1 2xl:grid-cols-3 gap-6">
             <div class="2xl:col-span-2">
               <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-                <div class="flex items-center justify-between gap-4 mb-4">
+                <div class="flex items-center justify-between gap-4 mb-4 flex-wrap">
                   <h3 class="text-xl font-semibold">Search results</h3>
-                  <div id="searchMeta" class="text-sm text-slate-400">No results yet.</div>
+                  <div class="flex items-center gap-3 flex-wrap">
+                    <select id="searchSort" class="rounded-xl bg-slate-950 border border-slate-700 px-3 py-1.5 text-sm focus:border-cyan-500 focus:outline-none transition">
+                      <option value="relevance" selected>Sort: relevance</option>
+                      <option value="date">Sort: date</option>
+                      <option value="source">Sort: source</option>
+                      <option value="title">Sort: title</option>
+                    </select>
+                    <div id="searchMeta" class="text-sm text-slate-400">No results yet.</div>
+                  </div>
                 </div>
                 <div id="searchCards" class="space-y-3"></div>
                 <div id="searchComparePanel" class="mt-6"></div>
@@ -402,86 +413,93 @@
               <h2 class="text-2xl font-semibold">Research</h2>
               <p class="text-slate-400">Get a structured overview with key points and best-matching sources.</p>
             </div>
-            <div class="mb-6 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">
-              Tip: use Research when you want a concise summary plus grouped meanings for ambiguous queries.
-            </div>
 
-            <div class="space-y-4">
+            <div class="space-y-3">
               <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-                <h3 class="text-sm font-semibold text-slate-200 mb-3">Query Settings</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   <div class="xl:col-span-2">
-                    <label for="researchQuery" class="block text-sm text-slate-300 mb-2">Query</label>
+                    <label for="researchQuery" class="block text-sm text-slate-400 mb-2">What do you want to research?</label>
                     <input id="researchQuery" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="artificial intelligence" />
                   </div>
                   <div>
-                    <label for="researchTopic" class="block text-sm text-slate-300 mb-2">Topic</label>
+                    <label for="researchTopic" class="block text-sm text-slate-400 mb-2">Topic</label>
                     <select id="researchTopic" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
                       <option value="general" selected>general</option>
                       <option value="news">news</option>
                     </select>
                   </div>
                   <div>
-                    <label for="researchLanguage" class="block text-sm text-slate-300 mb-2">Language</label>
+                    <label for="researchLanguage" class="block text-sm text-slate-400 mb-2">Language</label>
                     <select id="researchLanguage" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
                       <option value="english" selected>english</option>
                       <option value="romanian">romanian</option>
                     </select>
                   </div>
                   <div>
-                    <label for="researchMaxResults" class="block text-sm text-slate-300 mb-2">Max Results</label>
+                    <label for="researchMaxResults" class="block text-sm text-slate-400 mb-2">Max Results</label>
                     <input id="researchMaxResults" type="number" min="1" max="20" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="5" />
                   </div>
                 </div>
               </div>
 
-              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-                <h3 class="text-sm font-semibold text-slate-200 mb-3">Source Filters</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  <div class="xl:col-span-2">
-                    <label for="researchIncludeDomains" class="block text-sm text-slate-300 mb-2">Include Domains (manual)</label>
-                    <input id="researchIncludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="hotnews.ro,digi24.ro" />
-                  </div>
-                  <div>
-                    <label for="researchExcludeDomains" class="block text-sm text-slate-300 mb-2">Exclude Domains</label>
-                    <input id="researchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+              <details class="filter-group rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden">
+                <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-slate-900 transition">
+                  <span class="text-sm font-semibold text-slate-300">Source Filters</span>
+                  <span class="arrow text-slate-500 text-xs">&#9660;</span>
+                </summary>
+                <div class="px-4 pb-4">
+                  <p class="text-xs text-slate-500 mb-3">Leave Include Domains empty for automatic source suggestions.</p>
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div class="xl:col-span-2">
+                      <label for="researchIncludeDomains" class="block text-sm text-slate-400 mb-2">Include Domains</label>
+                      <input id="researchIncludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" placeholder="hotnews.ro,digi24.ro" />
+                    </div>
+                    <div>
+                      <label for="researchExcludeDomains" class="block text-sm text-slate-400 mb-2">Exclude Domains</label>
+                      <input id="researchExcludeDomains" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </details>
 
-              <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-                <h3 class="text-sm font-semibold text-slate-200 mb-3">Date Filters</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                  <div>
-                    <label for="researchTimeRange" class="block text-sm text-slate-300 mb-2">Time Range</label>
-                    <select id="researchTimeRange" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
-                      <option value="">none</option>
-                      <option value="day">day</option>
-                      <option value="week">week</option>
-                      <option value="month" selected>month</option>
-                      <option value="year">year</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label for="researchMaxAgeDays" class="block text-sm text-slate-300 mb-2">Max News Age (days)</label>
-                    <input id="researchMaxAgeDays" type="number" min="0" max="3650" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="30" />
-                  </div>
-                  <div>
-                    <label for="researchStartDate" class="block text-sm text-slate-300 mb-2">Start Date</label>
-                    <input id="researchStartDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
-                  </div>
-                  <div>
-                    <label for="researchEndDate" class="block text-sm text-slate-300 mb-2">End Date</label>
-                    <input id="researchEndDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+              <details class="filter-group rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden">
+                <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-slate-900 transition">
+                  <span class="text-sm font-semibold text-slate-300">Date Filters</span>
+                  <span class="arrow text-slate-500 text-xs">&#9660;</span>
+                </summary>
+                <div class="px-4 pb-4">
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div>
+                      <label for="researchTimeRange" class="block text-sm text-slate-400 mb-2">Time Range</label>
+                      <select id="researchTimeRange" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
+                        <option value="">none</option>
+                        <option value="day">day</option>
+                        <option value="week">week</option>
+                        <option value="month" selected>month</option>
+                        <option value="year">year</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="researchMaxAgeDays" class="block text-sm text-slate-400 mb-2">Max News Age (days)</label>
+                      <input id="researchMaxAgeDays" type="number" min="0" max="3650" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="30" />
+                    </div>
+                    <div>
+                      <label for="researchStartDate" class="block text-sm text-slate-400 mb-2">Start Date</label>
+                      <input id="researchStartDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                    </div>
+                    <div>
+                      <label for="researchEndDate" class="block text-sm text-slate-400 mb-2">End Date</label>
+                      <input id="researchEndDate" type="date" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </details>
             </div>
 
-            <div class="flex flex-wrap gap-3 mt-6">
-              <button id="researchBtn" class="rounded-2xl bg-fuchsia-600 hover:bg-fuchsia-500 px-4 py-3 font-medium">Run Research</button>
-              <button id="researchAIPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">AI Preset</button>
-              <button id="researchAmbiguousPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">Ambiguous Preset</button>
+            <div class="flex flex-wrap items-center gap-3 mt-6">
+              <button id="researchBtn" class="rounded-2xl bg-gradient-to-r from-fuchsia-600 to-fuchsia-500 hover:from-fuchsia-500 hover:to-fuchsia-400 px-6 py-3 font-semibold shadow-lg shadow-fuchsia-900/30 transition">Run Research</button>
+              <button id="researchAIPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium transition">AI Preset</button>
+              <button id="researchAmbiguousPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium transition">Ambiguous Preset</button>
             </div>
           </div>
 
@@ -1570,7 +1588,7 @@
           <a href="${item.url}" target="_blank" class="font-semibold text-cyan-300 hover:text-cyan-200">${escapeHtml(item.title || "Untitled")}</a>
           ${item.meaning ? `<div class="text-xs text-fuchsia-300 mt-2">${escapeHtml(item.meaning)}</div>` : ""}
           ${item.published_date ? `<div class="text-xs text-emerald-300 mt-2">${escapeHtml(formatPublishedDate(item.published_date))}</div>` : ""}
-          ${item.snippet ? `<p class="text-sm text-slate-300 mt-3 leading-7">${escapeHtml(item.snippet)}</p>` : ""}
+          ${item.snippet ? `<p class="text-sm text-slate-300 mt-3 leading-6 line-clamp-3">${escapeHtml(item.snippet)}</p>` : ""}
           <div class="text-xs text-slate-500 mt-3">Confidence: ${Number.isFinite(normalizeScore(item)) ? normalizeScore(item).toFixed(2) : "-"}</div>
         </div>
       `).join("");
@@ -1656,7 +1674,7 @@
             <span class="rounded-full px-2 py-1 ${trustedSourceClass(item.source)}">${TRUSTED_SITES.includes(String(item.source || "").toLowerCase()) ? "trusted" : "external"}</span>
           </div>
           ${publishedInfo ? `<div class="text-xs text-emerald-300 mb-3">Published: ${escapeHtml(publishedInfo)}</div>` : ""}
-          ${item.snippet ? `<p class="text-sm text-slate-300 line-clamp-6">${escapeHtml(item.snippet)}</p>` : `<p class="text-sm text-slate-500">No snippet available.</p>`}
+          ${item.snippet ? `<p class="text-sm text-slate-300 line-clamp-3 leading-6">${escapeHtml(item.snippet)}</p>` : `<p class="text-sm text-slate-500 italic">No preview available.</p>`}
         `;
         card.appendChild(buildActionRow("search", item));
         container.appendChild(card);
