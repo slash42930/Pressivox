@@ -174,7 +174,7 @@ def summarize_ambiguity_groups(query: str, meaning_groups: list[dict]) -> str:
         snippet_source = top.get("snippet") or title
         snippet = clean_summary_snippet(
             snippet_source,
-            max_chars=420,
+            max_chars=800,
             title=title,
             is_snippet=True,
         )
@@ -278,15 +278,15 @@ def summarize_extracted_documents(
                 summary_piece = build_doc_summary_piece(
                     doc,
                     title,
-                    max_sentences=3 if idx < 4 else 2,
-                    max_chars=1200,
+                    max_sentences=6 if idx < 4 else 4,
+                    max_chars=2400,
                 )
 
             if not summary_piece:
                 snippet_source = top.get("snippet") or title
                 summary_piece = clean_summary_snippet(
                     snippet_source,
-                    max_chars=1100,
+                    max_chars=2000,
                     title=title,
                     is_snippet=True,
                 )
@@ -303,15 +303,15 @@ def summarize_extracted_documents(
 
     parts = []
 
-    for doc in documents[:3]:
+    for doc in documents[:6]:
         title = strip_source_suffix(doc.get("title", "Untitled"))
-        summary_piece = build_doc_summary_piece(doc, title, max_sentences=3, max_chars=1200)
+        summary_piece = build_doc_summary_piece(doc, title, max_sentences=6, max_chars=2400)
 
         if not summary_piece:
             snippet_source = doc.get("important_passages", [""])[0] if doc.get("important_passages") else title
             summary_piece = clean_summary_snippet(
                 snippet_source,
-                max_chars=1100,
+                max_chars=2000,
                 title=title,
                 is_snippet=False,
             )
@@ -360,7 +360,7 @@ def _points_from_meaning_groups(meaning_groups: list[dict] | None) -> list[str]:
 
         snippet = clean_summary_snippet(
             snippet_source,
-            max_chars=520,
+            max_chars=800,
             title=title,
             is_snippet=True,
         )
@@ -497,7 +497,7 @@ def _relabel_point_by_content(point: str) -> str:
     return f"{normalized_label}: {body_clean}"
 
 
-def _trim_point_text(point: str, max_chars: int = 560) -> str:
+def _trim_point_text(point: str, max_chars: int = 900) -> str:
     """Trim very long points at sentence boundaries for readability."""
     value = clean_text(point)
     if len(value) <= max_chars:
@@ -1030,7 +1030,20 @@ def format_research_summary(
     points = points[:8]
 
     cleaned_text = clean_text(text)
-    summary_clean = "\n\n".join(f"- {point}" for point in points) if points else cleaned_text
+
+    # Build a prose paragraph by joining point bodies (without label prefixes)
+    # so the summary paragraph and key-points bullets don't repeat the same content.
+    if points:
+        bodies = []
+        for point in points:
+            body = point.split(":", 1)[1] if ":" in point else point
+            body = clean_text(body).strip()
+            if body:
+                bodies.append(body)
+        summary_clean = " ".join(bodies)
+    else:
+        summary_clean = cleaned_text
+
     summary_markdown = "\n\n".join(f"- {point}" for point in points)
 
     return {

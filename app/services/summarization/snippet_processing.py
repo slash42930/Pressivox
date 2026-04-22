@@ -77,7 +77,7 @@ def build_doc_summary_piece(doc: dict, title: str, max_sentences: int = 2, max_c
     raw_text = ""
 
     if passages:
-        raw_text = " ".join(clean_text(p) for p in passages[:2])
+        raw_text = " ".join(clean_text(p) for p in passages[:6])
     else:
         raw_text = clean_text(doc.get("extracted_text", ""))
 
