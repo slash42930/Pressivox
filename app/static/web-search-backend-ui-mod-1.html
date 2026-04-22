@@ -99,111 +99,130 @@
       <main class="lg:col-span-9 xl:col-span-10 space-y-6">
         <!-- DASHBOARD -->
         <section id="tab-dashboard" class="tab-panel">
-          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
+
+          <!-- Hero search bar -->
+          <div class="rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 border border-slate-800 p-8 mb-6">
+            <h2 class="text-3xl font-bold tracking-tight mb-1">What do you want to know?</h2>
+            <p class="text-slate-400 mb-6">Search or research any topic — results appear in the tabs below.</p>
+            <div class="flex gap-3 flex-wrap sm:flex-nowrap">
+              <input id="dashboardQuickInput" class="flex-1 min-w-0 rounded-2xl bg-slate-950 border border-slate-700 px-5 py-4 text-base placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition" placeholder="e.g. latest AI news, climate change, quantum computing…" />
+              <button id="dashboardQuickSearchBtn" class="rounded-2xl bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 px-6 py-4 font-semibold shadow-lg shadow-cyan-900/30 transition whitespace-nowrap">Search</button>
+              <button id="dashboardQuickResearchBtn" class="rounded-2xl bg-gradient-to-r from-fuchsia-600 to-fuchsia-500 hover:from-fuchsia-500 hover:to-fuchsia-400 px-6 py-4 font-semibold shadow-lg shadow-fuchsia-900/30 transition whitespace-nowrap">Research</button>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-5">
+              <span class="text-xs text-slate-500 self-center mr-1">Quick topics:</span>
+              <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="artificial intelligence news">AI</button>
+              <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="technology news">Technology</button>
+              <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="science breakthroughs">Science</button>
+              <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="business news today">Business</button>
+              <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="climate change latest">Climate</button>
+              <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="health and medicine news">Health</button>
+              <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="space exploration news">Space</button>
+              <button class="dash-chip rounded-full border border-slate-700 bg-slate-900 hover:bg-slate-800 hover:border-cyan-500/60 px-4 py-1.5 text-sm transition" data-q="cybersecurity threats">Security</button>
+            </div>
+          </div>
+
+          <!-- Session stats row -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div class="rounded-2xl bg-slate-900 border border-slate-800 px-4 py-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold text-base shrink-0">S</div>
               <div>
-                <h2 class="text-2xl font-semibold">Workspace cockpit</h2>
-                <p class="text-slate-400">Jump between workflows, watch activity, and keep momentum without leaving this screen.</p>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <button id="dashboardGoSearch" class="rounded-2xl bg-cyan-600 hover:bg-cyan-500 px-4 py-2.5 text-sm font-medium">Open Search</button>
-                <button id="dashboardGoResearch" class="rounded-2xl bg-fuchsia-600 hover:bg-fuchsia-500 px-4 py-2.5 text-sm font-medium">Open Research</button>
-                <button id="dashboardGoExtract" class="rounded-2xl bg-amber-600 hover:bg-amber-500 px-4 py-2.5 text-sm font-medium">Open Extract</button>
-                <button id="dashboardLoadHistories" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-sm font-medium">Load Histories</button>
+                <div class="text-xs text-slate-500 uppercase tracking-wide">Searches</div>
+                <div id="dashboardSearchRuns" class="text-2xl font-bold text-slate-100">0</div>
               </div>
             </div>
-            <div id="dashboardStatusLog" class="rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">Ready.</div>
-            <div class="mt-4 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-cyan-200 dashboard-ticker-wrap">
-              <div id="dashboardTickerText" class="dashboard-ticker-text">Search signals, compare sources, and keep moving.</div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
-            <div class="xl:col-span-2 rounded-3xl bg-slate-900 border border-slate-800 p-6">
-              <div class="flex items-center justify-between gap-4 mb-4">
-                <h3 class="text-xl font-semibold">Live activity</h3>
-                <button id="dashboardClearActivity" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-3 py-2 text-xs font-medium">Clear</button>
+            <div class="rounded-2xl bg-slate-900 border border-slate-800 px-4 py-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 font-bold text-base shrink-0">R</div>
+              <div>
+                <div class="text-xs text-slate-500 uppercase tracking-wide">Research</div>
+                <div id="dashboardResearchRuns" class="text-2xl font-bold text-slate-100">0</div>
               </div>
-              <div id="dashboardActivityList" class="space-y-3"></div>
             </div>
-            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-              <h3 class="text-xl font-semibold mb-4">Workspace pulse</h3>
-              <div class="space-y-3 text-sm">
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400">Last action</div>
-                  <div id="dashboardLastAction" class="text-slate-200 mt-1">-</div>
-                </div>
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400">Search runs</div>
-                  <div id="dashboardSearchRuns" class="text-slate-200 mt-1">0</div>
-                </div>
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400">Research runs</div>
-                  <div id="dashboardResearchRuns" class="text-slate-200 mt-1">0</div>
-                </div>
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400">Extract runs</div>
-                  <div id="dashboardExtractRuns" class="text-slate-200 mt-1">0</div>
-                </div>
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400">Compared items</div>
-                  <div id="dashboardCompareItems" class="text-slate-200 mt-1">0</div>
-                </div>
+            <div class="rounded-2xl bg-slate-900 border border-slate-800 px-4 py-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-base shrink-0">E</div>
+              <div>
+                <div class="text-xs text-slate-500 uppercase tracking-wide">Extracts</div>
+                <div id="dashboardExtractRuns" class="text-2xl font-bold text-slate-100">0</div>
+              </div>
+            </div>
+            <div class="rounded-2xl bg-slate-900 border border-slate-800 px-4 py-3 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-base shrink-0">C</div>
+              <div>
+                <div class="text-xs text-slate-500 uppercase tracking-wide">Compared</div>
+                <div id="dashboardCompareItems" class="text-2xl font-bold text-slate-100">0</div>
               </div>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-6">
+          <!-- Last search + Last research snapshots -->
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
             <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
               <div class="flex items-center justify-between gap-4 mb-4">
-                <div>
-                  <h2 class="text-2xl font-semibold">Top News of the Week</h2>
-                  <p class="text-slate-400">Top 3 English and Top 3 Romanian headlines ranked from existing domains by global view-weighted signals.</p>
-                </div>
-                <button id="dashboardRefreshTopNews" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-sm font-medium">Refresh</button>
+                <h3 class="text-xl font-semibold">Last search</h3>
+                <button id="dashboardGoSearch" class="rounded-xl bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/30 text-cyan-300 px-3 py-1.5 text-xs font-medium transition">Open Search →</button>
               </div>
-              <div id="dashboardTopNewsMeta" class="text-sm text-slate-400 mb-4">Loading weekly headlines...</div>
-              <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-                  <h3 class="text-lg font-semibold mb-3">Top 3 English</h3>
-                  <div id="dashboardTopNewsEnglish" class="space-y-3"></div>
+              <div id="dashboardLastSearchSnapshot" class="space-y-2 text-sm text-slate-400">No search run yet this session.</div>
+            </div>
+            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
+              <div class="flex items-center justify-between gap-4 mb-4">
+                <h3 class="text-xl font-semibold">Last research</h3>
+                <button id="dashboardGoResearch" class="rounded-xl bg-fuchsia-600/20 hover:bg-fuchsia-600/40 border border-fuchsia-500/30 text-fuchsia-300 px-3 py-1.5 text-xs font-medium transition">Open Research →</button>
+              </div>
+              <div id="dashboardLastResearchSnapshot" class="space-y-2 text-sm text-slate-400">No research run yet this session.</div>
+            </div>
+          </div>
+
+          <!-- Top News + Quick start -->
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
+              <div class="flex items-center justify-between gap-4 mb-2">
+                <h3 class="text-xl font-semibold">Top News of the Week</h3>
+                <button id="dashboardRefreshTopNews" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-2 text-sm font-medium transition">Refresh</button>
+              </div>
+              <div id="dashboardTopNewsMeta" class="text-xs text-slate-500 mb-4">Loading headlines…</div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-2">English</div>
+                  <div id="dashboardTopNewsEnglish" class="space-y-2"></div>
                 </div>
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
-                  <h3 class="text-lg font-semibold mb-3">Top 3 Romanian</h3>
-                  <div id="dashboardTopNewsRomanian" class="space-y-3"></div>
+                <div>
+                  <div class="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-2">Romanian</div>
+                  <div id="dashboardTopNewsRomanian" class="space-y-2"></div>
                 </div>
               </div>
             </div>
 
             <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-              <div class="flex items-center justify-between mb-4 gap-4">
-                <div>
-                  <h2 class="text-2xl font-semibold">Quick start</h2>
-                  <p class="text-slate-400">Run common tasks quickly and jump into results right away.</p>
-                </div>
-              </div>
-
-              <div id="dashboardQuickActions" class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <button class="preset-btn rounded-2xl bg-slate-950 border border-slate-800 p-4 text-left hover:border-cyan-500/40 hover:bg-slate-900" data-kind="research" data-query="artificial intelligence" data-topic="general" data-include="wikipedia.org">
-                  <div class="font-medium mb-1">AI overview</div>
-                  <div class="text-sm text-slate-400">General research with Wikipedia</div>
+              <h3 class="text-xl font-semibold mb-1">Quick start</h3>
+              <p class="text-slate-400 text-sm mb-5">Jump straight into common workflows with one click.</p>
+              <div id="dashboardQuickActions" class="space-y-3">
+                <button class="preset-btn w-full rounded-2xl bg-slate-950 border border-slate-800 p-4 text-left hover:border-fuchsia-500/40 hover:bg-slate-900 transition" data-kind="research" data-query="artificial intelligence" data-topic="general" data-include="wikipedia.org">
+                  <div class="font-medium mb-0.5">AI overview</div>
+                  <div class="text-sm text-slate-400">Research AI using Wikipedia as source</div>
                 </button>
-                <button class="preset-btn rounded-2xl bg-slate-950 border border-slate-800 p-4 text-left hover:border-cyan-500/40 hover:bg-slate-900" data-kind="search" data-query="latest AI news" data-topic="news">
-                  <div class="font-medium mb-1">Latest AI news</div>
-                  <div class="text-sm text-slate-400">Search current news quickly</div>
+                <button class="preset-btn w-full rounded-2xl bg-slate-950 border border-slate-800 p-4 text-left hover:border-cyan-500/40 hover:bg-slate-900 transition" data-kind="search" data-query="latest AI news" data-topic="news">
+                  <div class="font-medium mb-0.5">Latest AI news</div>
+                  <div class="text-sm text-slate-400">Search the freshest AI headlines</div>
                 </button>
-                <button class="preset-btn rounded-2xl bg-slate-950 border border-slate-800 p-4 text-left hover:border-cyan-500/40 hover:bg-slate-900" data-kind="extract" data-url="https://en.wikipedia.org/wiki/Artificial_intelligence">
-                  <div class="font-medium mb-1">Extract one page</div>
-                  <div class="text-sm text-slate-400">Single URL content extraction</div>
+                <button class="preset-btn w-full rounded-2xl bg-slate-950 border border-slate-800 p-4 text-left hover:border-amber-500/40 hover:bg-slate-900 transition" data-kind="extract" data-url="https://en.wikipedia.org/wiki/Artificial_intelligence">
+                  <div class="font-medium mb-0.5">Extract one page</div>
+                  <div class="text-sm text-slate-400">Read and extract any Wikipedia article</div>
                 </button>
               </div>
-
-              <div class="mt-6 rounded-2xl bg-slate-950 border border-slate-800 p-4 text-sm text-slate-300">
-                Tip: switch language before running a preset if you want region-specific sources by default.
-              </div>
+              <div id="dashboardStatusLog" class="mt-5 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-400">Ready.</div>
             </div>
-
           </div>
+
+          <!-- Hidden compatibility elements -->
+          <div class="hidden" aria-hidden="true">
+            <div id="dashboardTickerText"></div>
+            <div id="dashboardActivityList"></div>
+            <button id="dashboardClearActivity"></button>
+            <button id="dashboardLoadHistories"></button>
+            <button id="dashboardGoExtract"></button>
+            <div id="dashboardLastAction"></div>
+          </div>
+
         </section>
 
         <!-- INFO -->
@@ -1458,6 +1477,16 @@
       state.lastResponse = data;
       state.lastQuery = data?.query || "";
       refreshDashboardPulse();
+      const snap = document.getElementById("dashboardLastResearchSnapshot");
+      if (!snap) return;
+      const points = Array.isArray(data.summary_points) ? data.summary_points.slice(0, 3) : [];
+      const summary = data.summary ? escapeHtml(data.summary).slice(0, 280) + (data.summary.length > 280 ? "…" : "") : "";
+      snap.innerHTML = `
+        <div class="text-xs text-fuchsia-400 font-semibold uppercase tracking-wide mb-2">${escapeHtml(data.query || "-")}</div>
+        ${summary ? `<p class="text-slate-300 text-sm leading-6 mb-3">${summary}</p>` : ""}
+        ${points.length ? `<ul class="space-y-1.5">${points.map(p => `<li class="flex gap-2 text-sm text-slate-300"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-fuchsia-400 shrink-0"></span><span>${escapeHtml(p)}</span></li>`).join("")}</ul>` : ""}
+        <div class="text-xs text-slate-500 mt-3">${(data.selected_sources || []).length} sources · ${data.source_count ?? 0} results</div>
+      `;
     }
 
     function persistField(id) {
@@ -1976,6 +2005,22 @@
       const sorted = sortResults(state.searchResults, "relevance");
       const responseTime = typeof data.response_time === "number" ? `${data.response_time.toFixed(2)}s` : "-";
 
+      // update dashboard snapshot
+      const snap = document.getElementById("dashboardLastSearchSnapshot");
+      if (snap) {
+        const top3 = sorted.slice(0, 3);
+        snap.innerHTML = `
+          <div class="text-xs text-cyan-400 font-semibold uppercase tracking-wide mb-2">${escapeHtml(data.query || "-")}</div>
+          <div class="space-y-2">${top3.map(item => `
+            <div class="rounded-xl bg-slate-950 border border-slate-800 px-3 py-2">
+              <a href="${item.url}" target="_blank" class="text-sm font-medium text-cyan-300 hover:text-cyan-200 line-clamp-1">${escapeHtml(item.title || "Untitled")}</a>
+              <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(item.source || "")}</div>
+            </div>`).join("")}
+          </div>
+          <div class="text-xs text-slate-500 mt-3">${sorted.length} results · ${responseTime}</div>
+        `;
+      }
+
       els.searchMeta.textContent = `${sorted.length} result(s)`;
       els.searchSummaryBox.textContent = data.summary || data.extracted_summary || data.answer || "No summary returned.";
       els.searchAmbiguousBadge.textContent = data.ambiguous ? "Ambiguous" : "Clear";
@@ -2243,6 +2288,43 @@
       }
       if (els.dashboardClearActivity) els.dashboardClearActivity.addEventListener("click", clearDashboardActivity);
       if (els.dashboardRefreshTopNews) els.dashboardRefreshTopNews.addEventListener("click", () => loadDashboardTopNews({ silent: false }));
+
+      // Dashboard quick search / research
+      const dashInput = document.getElementById("dashboardQuickInput");
+      const dashSearchBtn = document.getElementById("dashboardQuickSearchBtn");
+      const dashResearchBtn = document.getElementById("dashboardQuickResearchBtn");
+      if (dashSearchBtn && dashInput) {
+        dashSearchBtn.addEventListener("click", () => {
+          const q = dashInput.value.trim();
+          if (!q) return;
+          document.getElementById("searchQuery").value = q;
+          persistField("searchQuery");
+          activateTab("search");
+          runSearch();
+        });
+      }
+      if (dashResearchBtn && dashInput) {
+        dashResearchBtn.addEventListener("click", () => {
+          const q = dashInput.value.trim();
+          if (!q) return;
+          document.getElementById("researchQuery").value = q;
+          persistField("researchQuery");
+          activateTab("research");
+          runResearch();
+        });
+      }
+      if (dashInput) {
+        dashInput.addEventListener("keydown", e => {
+          if (e.key === "Enter" && dashSearchBtn) dashSearchBtn.click();
+        });
+      }
+      document.querySelectorAll(".dash-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          const q = chip.dataset.q || "";
+          if (dashInput) dashInput.value = q;
+          if (dashSearchBtn) dashSearchBtn.click();
+        });
+      });
       els.searchBtn.addEventListener("click", runSearch);
       els.searchAnalyzeBtn.addEventListener("click", analyzeSearchQuery);
       els.researchBtn.addEventListener("click", runResearch);
