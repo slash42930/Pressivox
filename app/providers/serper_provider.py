@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import time
 import uuid
+from datetime import date as _date
 from urllib.parse import urlparse
 
 import httpx
@@ -20,6 +21,63 @@ _TBS_MAP = {
     "year": "qdr:y",
     "y": "qdr:y",
 }
+
+
+def _iso_to_serper_date(iso: object) -> str:
+    """Convert YYYY-MM-DD string or date object to M/D/YYYY (no leading zeros) for Serper tbs."""
+    try:
+        if isinstance(iso, _date):
+            return f"{iso.month}/{iso.day}/{iso.year}"
+        y, m, d = str(iso).split("-")
+        return f"{int(m)}/{int(d)}/{y}"
+    except (ValueError, AttributeError):
+        return ""
+
+
+def _build_custom_date_tbs(start_date: str | None, end_date: str | None) -> str:
+    """Build Serper tbs string for a custom date range.
+
+    Serper (Google) /search custom date range format:
+        cdr:1,cd_min:M/D/YYYY,cd_max:M/D/YYYY
+    Either bound may be omitted.
+    """
+    parts = ["cdr:1"]
+    if start_date:
+        cd_min = _iso_to_serper_date(start_date)
+        if cd_min:
+            parts.append(f"cd_min:{cd_min}")
+    if end_date:
+        cd_max = _iso_to_serper_date(end_date)
+        if cd_max:
+            parts.append(f"cd_max:{cd_max}")
+    return ",".join(parts)
+
+
+def _date_span_to_news_tbs(start_date: object, end_date: object) -> str:
+    """Map a date range to the nearest Serper /news tbs preset.
+
+    Serper /news only supports preset qdr:d/w/m/y — custom cdr:1 is silently
+    ignored on the news endpoint.  Pick the tightest preset that covers the
+    requested range, measured from start_date back to today.
+    Accepts both datetime.date objects and YYYY-MM-DD strings.
+    """
+    try:
+        today = _date.today()
+        if start_date:
+            ref = start_date if isinstance(start_date, _date) else _date.fromisoformat(str(start_date))
+        else:
+            ref = today
+        days_ago = max(0, (today - ref).days)
+    except (ValueError, AttributeError, TypeError):
+        days_ago = 7  # safe fallback
+
+    if days_ago <= 1:
+        return "qdr:d"
+    if days_ago <= 7:
+        return "qdr:w"
+    if days_ago <= 31:
+        return "qdr:m"
+    return "qdr:y"
 
 _LANG_MAP = {
     "english": "en",
@@ -43,7 +101,7 @@ class SerperSearchProvider(SearchProvider):
         value = re.sub(r"\bWikimedia\s+Foundation\b", "", value, flags=re.IGNORECASE)
         value = re.sub(r"\s+", " ", value).strip()
 
-        return value if len(value) >= 20 else None
+        return value if len(value) >= 10 else None
 
     def _build_query(
         self,
@@ -100,10 +158,19 @@ class SerperSearchProvider(SearchProvider):
             "hl": _LANG_MAP.get(str(language), "en"),
         }
 
-        if time_range and time_range in _TBS_MAP:
-            payload["tbs"] = _TBS_MAP[time_range]
+        start_date = kwargs.get("start_date")
+        end_date = kwargs.get("end_date")
 
-        # Serper does not support start_date / end_date natively; ignore gracefully.
+        if start_date or end_date:
+            # Custom date range takes priority over named time_range.
+            # /news endpoint only supports preset qdr:* values; cdr:1 is silently
+            # ignored there, so map the span to the nearest preset instead.
+            if topic == "news":
+                payload["tbs"] = _date_span_to_news_tbs(start_date, end_date)
+            else:
+                payload["tbs"] = _build_custom_date_tbs(start_date, end_date)
+        elif time_range and time_range in _TBS_MAP:
+            payload["tbs"] = _TBS_MAP[time_range]
 
         t0 = time.monotonic()
 
