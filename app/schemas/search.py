@@ -48,9 +48,10 @@ class SearchResultItem(BaseModel):
     score: float | None = None
     source: str | None = None
     published_date: str | None = None
-    favicon: HttpUrl | None = None
+    favicon: str | None = None
     raw_content: str | None = None
     rerank_score: float | None = None
+    thumbnail: str | None = None
 
 
 class ResearchSelectedSourceItem(BaseModel):
@@ -59,7 +60,7 @@ class ResearchSelectedSourceItem(BaseModel):
     url: HttpUrl
     source: str | None = None
     rerank_score: float | None = None
-    favicon: HttpUrl | None = None
+    favicon: str | None = None
 
 
 class ResearchResultItem(BaseModel):
@@ -69,7 +70,8 @@ class ResearchResultItem(BaseModel):
     score: float | None = None
     rerank_score: float | None = None
     published_date: str | None = None
-    favicon: HttpUrl | None = None
+    favicon: str | None = None
+    thumbnail: str | None = None
 
 
 class SearchResponse(BaseModel):
@@ -92,6 +94,11 @@ class SearchResponse(BaseModel):
     selected_sources: list[ResearchSelectedSourceItem] = Field(default_factory=list)
     ambiguous: bool = False
     meaning_groups: list[dict[str, Any]] = Field(default_factory=list)
+    # Serper-unique rich SERP features
+    knowledge_graph: dict[str, Any] | None = None
+    answer_box: dict[str, Any] | None = None
+    people_also_ask: list[dict[str, Any]] = Field(default_factory=list)
+    related_searches: list[str] = Field(default_factory=list)
 
 
 class ResearchResponse(BaseModel):
@@ -113,6 +120,10 @@ class ResearchResponse(BaseModel):
     request_id: str | None = None
     response_time: float | None = None
     usage: dict[str, Any] | None = None
+    # Serper-unique rich SERP features
+    answer_box: dict[str, Any] | None = None
+    people_also_ask: list[dict[str, Any]] = Field(default_factory=list)
+    related_searches: list[str] = Field(default_factory=list)
 
 
 class SearchHistoryItem(BaseModel):

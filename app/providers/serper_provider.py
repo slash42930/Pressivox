@@ -134,6 +134,10 @@ class SerperSearchProvider(SearchProvider):
             position = item.get("position", len(normalized_results) + 1)
             score = round(1.0 / position, 6) if position else None
 
+            favicon_url: str | None = None
+            if include_favicon and hostname:
+                favicon_url = f"https://www.google.com/s2/favicons?sz=32&domain={hostname}"
+
             normalized_results.append(
                 {
                     "title": item.get("title", "Untitled"),
@@ -143,18 +147,73 @@ class SerperSearchProvider(SearchProvider):
                     "source": hostname,
                     "raw_content": None,
                     "published_date": item.get("date"),
-                    "favicon": None,
+                    "favicon": favicon_url,
+                    # news results carry an article thumbnail; organic results don't
+                    "thumbnail": item.get("imageUrl"),
                 }
             )
 
+        # ── Serper rich SERP features ─────────────────────────────────────────
+        kg_data: dict = data.get("knowledgeGraph") or {}
+        ab_data: dict = data.get("answerBox") or {}
+
+        # Best answer text: prefer KG description, then answerBox snippet, then answer
         answer: str | None = None
         if include_answer:
-            kg = data.get("knowledgeGraph", {})
-            answer = kg.get("description") or data.get("answerBox", {}).get("answer")
+            answer = (
+                kg_data.get("description")
+                or ab_data.get("snippet")
+                or ab_data.get("answer")
+            )
+
+        # Knowledge graph — entity card (title, type, description, attributes)
+        knowledge_graph: dict | None = None
+        if kg_data:
+            knowledge_graph = {
+                "title": kg_data.get("title"),
+                "type": kg_data.get("type"),
+                "description": kg_data.get("description"),
+                "website": kg_data.get("website"),
+                "image_url": kg_data.get("imageUrl"),
+                "attributes": kg_data.get("attributes") or {},
+            }
+
+        # Answer box — featured snippet
+        answer_box: dict | None = None
+        if ab_data:
+            answer_box = {
+                "title": ab_data.get("title"),
+                "answer": ab_data.get("answer"),
+                "snippet": ab_data.get("snippet"),
+                "highlighted": ab_data.get("snippetHighlighted") or [],
+            }
+
+        # People Also Ask
+        people_also_ask: list[dict] = [
+            {
+                "question": paa.get("question", ""),
+                "snippet": paa.get("snippet", ""),
+                "title": paa.get("title", ""),
+                "link": paa.get("link", ""),
+            }
+            for paa in (data.get("peopleAlsoAsk") or [])
+            if paa.get("question")
+        ]
+
+        # Related searches — list of query strings
+        related_searches: list[str] = [
+            rs["query"]
+            for rs in (data.get("relatedSearches") or [])
+            if rs.get("query")
+        ]
 
         return {
             "results": normalized_results,
             "answer": answer,
+            "knowledge_graph": knowledge_graph,
+            "answer_box": answer_box,
+            "people_also_ask": people_also_ask,
+            "related_searches": related_searches,
             "response_time": elapsed,
             "request_id": str(uuid.uuid4()),
             "auto_parameters": None,

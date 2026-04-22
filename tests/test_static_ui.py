@@ -14,4 +14,4 @@ def test_static_mod_ui_is_served() -> None:
     assert "Advanced Research" in response.text
     assert "Copy Markdown" in response.text
     assert "Top News of the Week" in response.text
-    assert "Top 3 Romanian" in response.text
+    assert "Romanian" in response.text

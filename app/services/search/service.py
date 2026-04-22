@@ -21,7 +21,6 @@ from .result_filtering import (
     primary_results_for_extraction,
 )
 from .scoring import rerank_results
-from .scoring import smart_select_domains
 from .text_processing import query_terms
 
 
@@ -147,19 +146,20 @@ class SearchService:
 
     async def run_search(self, request: SearchRequest, session_id: str | None = None) -> dict:
         """Execute search and return results."""
-        include_domains = request.include_domains or smart_select_domains(
-            request.query,
-            request.topic,
-            request.language,
-            50,
-        )
+        # Only pass explicitly user-specified include_domains to the provider.
+        # smart_select_domains produces 50 trusted domains intended for Tavily's
+        # native domain-filter parameter; passing them as site: operators in a
+        # Serper query string makes the query too long and breaks results.
+        # Domain trust scoring still happens in rerank_results() below.
+        provider_include_domains = request.include_domains or None
 
         primary_payload = await self.provider.search(
             query=request.query,
             topic=request.topic,
             max_results=max(request.max_results, 8 if self._is_short_general_query(request) else request.max_results),
-            include_domains=include_domains,
+            include_domains=provider_include_domains,
             exclude_domains=request.exclude_domains,
+            language=request.language,
             search_depth=request.search_depth,
             include_answer=request.include_answer,
             include_raw_content=request.include_raw_content,
@@ -183,6 +183,7 @@ class SearchService:
                 max_results=8,
                 include_domains=["en.wikipedia.org", "britannica.com"],
                 exclude_domains=request.exclude_domains,
+                language=request.language,
                 search_depth=request.search_depth,
                 include_answer=False,
                 include_raw_content=request.include_raw_content,
@@ -290,6 +291,11 @@ class SearchService:
             "selected_sources": selected_sources,
             "ambiguous": ambiguous,
             "meaning_groups": meaning_groups,
+            # Serper-unique rich SERP features — pass through transparently
+            "knowledge_graph": primary_payload.get("knowledge_graph"),
+            "answer_box": primary_payload.get("answer_box"),
+            "people_also_ask": primary_payload.get("people_also_ask", []),
+            "related_searches": primary_payload.get("related_searches", []),
         }
 
     def list_history(self, limit: int = 20, session_id: str | None = None) -> list[SearchHistory]:

@@ -43,12 +43,17 @@ async def run_research(
                 "rerank_score": item.get("rerank_score"),
                 "published_date": item.get("published_date"),
                 "favicon": item.get("favicon"),
+                "thumbnail": item.get("thumbnail"),
             }
             for item in result["results"]
             if is_good_result_for_extraction(item)
         ]
 
-        summary_text = result["extracted_summary"] or result["summary"] or result.get("answer")
+        # Build summary text — prefer extracted content, then fall back to
+        # Serper's answerBox snippet (richer than the generic KG description).
+        ab = result.get("answer_box") or {}
+        serper_answer = ab.get("snippet") or ab.get("answer") or result.get("answer") or ""
+        summary_text = result["extracted_summary"] or result["summary"] or serper_answer or None
         formatted_summary = format_research_summary(
             summary_text,
             result["query"],
@@ -71,6 +76,10 @@ async def run_research(
             "request_id": result.get("request_id"),
             "response_time": result.get("response_time"),
             "usage": result.get("usage"),
+            # Serper-unique features
+            "answer_box": result.get("answer_box"),
+            "people_also_ask": result.get("people_also_ask", []),
+            "related_searches": result.get("related_searches", []),
         }
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

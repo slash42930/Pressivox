@@ -379,12 +379,21 @@
                     <div id="searchMeta" class="text-sm text-slate-400">No results yet.</div>
                   </div>
                 </div>
+                <!-- Serper: Answer Box (featured snippet) -->
+                <div id="searchAnswerBox" class="hidden mb-5"></div>
                 <div id="searchCards" class="space-y-3"></div>
                 <div id="searchComparePanel" class="mt-6"></div>
+                <!-- Serper: People Also Ask -->
+                <div id="searchPeopleAlsoAsk" class="hidden mt-6"></div>
+                <!-- Serper: Related Searches -->
+                <div id="searchRelatedSearches" class="hidden mt-6"></div>
               </div>
             </div>
 
             <div>
+              <!-- Serper: Knowledge Graph -->
+              <div id="searchKnowledgeGraph" class="hidden rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6"></div>
+
               <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
                 <h3 class="text-xl font-semibold mb-4">Search summary</h3>
                 <div id="searchSummaryBox" class="text-slate-300 whitespace-pre-wrap">No summary yet.</div>
@@ -546,6 +555,9 @@
               <div id="researchSummary" class="text-slate-200 space-y-4 text-base leading-relaxed"><p class="text-slate-400 text-sm">Run a research query to see a summary here.</p></div>
             </div>
 
+            <!-- Serper: answer box for research -->
+            <div id="researchAnswerBox" class="hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 border border-amber-500/30 p-6"></div>
+
             <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
               <h3 class="text-xl font-semibold mb-4">Overview</h3>
               <div class="space-y-3 text-sm">
@@ -595,6 +607,10 @@
             <div id="researchResultsCards" class="space-y-3"></div>
             <div id="researchComparePanel" class="mt-6"></div>
           </div>
+
+          <!-- Serper: People Also Ask & Related Searches for Research -->
+          <div id="researchPeopleAlsoAsk" class="hidden rounded-3xl bg-slate-900 border border-slate-800 p-6"></div>
+          <div id="researchRelatedSearches" class="hidden rounded-3xl bg-slate-900 border border-slate-800 p-6"></div>
         </section>
 
         <!-- EXTRACT -->
@@ -679,10 +695,16 @@
 
   <script>
     const AppConfig = (() => {
+      const h = window.location.hostname;
+      const isFile = h === ""; // opened as file:// directly
+      const isLocal = isFile || ["localhost", "127.0.0.1", "0.0.0.0"].includes(h);
+      const localBase = isFile
+        ? "http://127.0.0.1:8000/api/v1"
+        : `${window.location.protocol}//${h}:${window.location.port || 8000}/api/v1`;
       return {
-        apiBaseUrl: "https://pressivox.onrender.com/api/v1",
+        apiBaseUrl: isLocal ? localBase : "https://pressivox.onrender.com/api/v1",
         appName: "Web Search Workspace",
-        configSource: "fixed-production",
+        configSource: isLocal ? (isFile ? "file-local" : "auto-local") : "fixed-production",
       };
     })();
 
@@ -940,6 +962,14 @@
       researchResultsCards: document.getElementById("researchResultsCards"),
       researchResultMeta: document.getElementById("researchResultMeta"),
       researchComparePanel: document.getElementById("researchComparePanel"),
+      // Serper-specific panels
+      searchAnswerBox: document.getElementById("searchAnswerBox"),
+      searchKnowledgeGraph: document.getElementById("searchKnowledgeGraph"),
+      searchPeopleAlsoAsk: document.getElementById("searchPeopleAlsoAsk"),
+      searchRelatedSearches: document.getElementById("searchRelatedSearches"),
+      researchAnswerBox: document.getElementById("researchAnswerBox"),
+      researchPeopleAlsoAsk: document.getElementById("researchPeopleAlsoAsk"),
+      researchRelatedSearches: document.getElementById("researchRelatedSearches"),
 
       extractBtn: document.getElementById("extractBtn"),
       extractWikiPreset: document.getElementById("extractWikiPreset"),
@@ -1394,6 +1424,94 @@
       return `<img src="${escapeHtml(url)}" alt="" class="${sizeClass} rounded-sm shrink-0 bg-slate-900 border border-slate-700" onerror="this.style.display='none'" />`;
     }
 
+    // ── Serper-unique feature renderers ─────────────────────────────────────
+
+    function renderAnswerBox(container, ab) {
+      if (!container) return;
+      if (!ab || (!ab.snippet && !ab.answer)) { container.classList.add("hidden"); container.innerHTML = ""; return; }
+      const title = ab.title ? `<div class="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-2">${escapeHtml(ab.title)}</div>` : "";
+      const text = escapeHtml(ab.snippet || ab.answer || "");
+      const highlighted = Array.isArray(ab.highlighted) ? ab.highlighted : [];
+      let displayText = text;
+      highlighted.forEach(h => {
+        displayText = displayText.replace(escapeHtml(h), `<mark class="bg-amber-400/20 text-amber-200 rounded px-0.5">${escapeHtml(h)}</mark>`);
+      });
+      container.innerHTML = `
+        <div class="flex items-start gap-3">
+          <span class="text-amber-400 text-lg shrink-0">⚡</span>
+          <div class="flex-1 min-w-0">
+            ${title}
+            <p class="text-slate-200 text-sm leading-relaxed">${displayText}</p>
+          </div>
+        </div>`;
+      container.classList.remove("hidden");
+    }
+
+    function renderKnowledgeGraph(container, kg) {
+      if (!container) return;
+      if (!kg || !kg.title) { container.classList.add("hidden"); container.innerHTML = ""; return; }
+      const img = kg.image_url ? `<img src="${escapeHtml(kg.image_url)}" alt="${escapeHtml(kg.title)}" class="w-16 h-16 rounded-xl object-cover bg-slate-800 shrink-0" onerror="this.style.display='none'" />` : "";
+      const desc = kg.description ? `<p class="text-sm text-slate-300 leading-relaxed mt-2">${escapeHtml(kg.description)}</p>` : "";
+      const website = kg.website ? `<a href="${escapeHtml(kg.website)}" target="_blank" class="text-xs text-cyan-400 hover:text-cyan-300 break-all">${escapeHtml(kg.website)}</a>` : "";
+      const attrs = kg.attributes && Object.keys(kg.attributes).length
+        ? `<div class="mt-3 space-y-1">${Object.entries(kg.attributes).map(([k, v]) =>
+            `<div class="flex gap-2 text-xs"><span class="text-slate-500 shrink-0 w-28 truncate">${escapeHtml(k)}</span><span class="text-slate-300">${escapeHtml(String(v))}</span></div>`
+          ).join("")}</div>` : "";
+      container.innerHTML = `
+        <div class="flex items-start gap-3 mb-3">
+          ${img}
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-slate-100">${escapeHtml(kg.title)}</div>
+            ${kg.type ? `<div class="text-xs text-slate-500 mt-0.5">${escapeHtml(kg.type)}</div>` : ""}
+            ${website}
+          </div>
+        </div>
+        ${desc}${attrs}`;
+      const header = document.createElement("div");
+      header.className = "flex items-center gap-2 mb-3";
+      header.innerHTML = `<span class="text-cyan-400 text-sm">🔷</span><h3 class="text-base font-semibold">Knowledge Graph</h3>`;
+      container.prepend(header);
+      container.classList.remove("hidden");
+    }
+
+    function renderPeopleAlsoAsk(container, paa) {
+      if (!container) return;
+      if (!Array.isArray(paa) || !paa.length) { container.classList.add("hidden"); container.innerHTML = ""; return; }
+      container.innerHTML = `
+        <h3 class="text-lg font-semibold mb-3 flex items-center gap-2"><span class="text-fuchsia-400">🙋</span> People Also Ask</h3>
+        <div class="space-y-2">
+          ${paa.map(item => `
+            <details class="rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden group">
+              <summary class="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-900 transition text-sm font-medium text-slate-200">
+                ${escapeHtml(item.question)}
+                <span class="text-slate-500 text-xs ml-2 shrink-0">&#9660;</span>
+              </summary>
+              <div class="px-4 pb-4 pt-1">
+                ${item.snippet ? `<p class="text-sm text-slate-300 leading-relaxed mb-2">${escapeHtml(item.snippet)}</p>` : ""}
+                ${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" class="text-xs text-cyan-400 hover:text-cyan-300">${escapeHtml(item.title || item.link)}</a>` : ""}
+              </div>
+            </details>`).join("")}
+        </div>`;
+      container.classList.remove("hidden");
+    }
+
+    function renderRelatedSearches(container, queries, onClickFn) {
+      if (!container) return;
+      if (!Array.isArray(queries) || !queries.length) { container.classList.add("hidden"); container.innerHTML = ""; return; }
+      const chips = queries.map(q =>
+        `<button class="related-search-chip rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500/50 px-3 py-1.5 text-sm text-slate-300 hover:text-cyan-300 transition" data-q="${escapeHtml(q)}">${escapeHtml(q)}</button>`
+      ).join("");
+      container.innerHTML = `
+        <h3 class="text-base font-semibold mb-3 flex items-center gap-2 text-slate-400"><span>🔍</span> Related Searches</h3>
+        <div class="flex flex-wrap gap-2">${chips}</div>`;
+      container.querySelectorAll(".related-search-chip").forEach(btn => {
+        btn.addEventListener("click", () => onClickFn && onClickFn(btn.dataset.q));
+      });
+      container.classList.remove("hidden");
+    }
+
+    // ── End Serper renderers ─────────────────────────────────────────────────
+
     function toIsoDate(dateObj) {
       return dateObj.toISOString().slice(0, 10);
     }
@@ -1697,7 +1815,11 @@
       const score = normalizeScore(item);
       const card = document.createElement("div");
       card.className = "rounded-2xl bg-slate-950 border border-slate-800 p-4 hover:border-cyan-500/30 transition";
+      const thumbnailHtml = item.thumbnail
+        ? `<img src="${escapeHtml(item.thumbnail)}" alt="" class="w-full h-32 object-cover rounded-xl mb-3 bg-slate-900" onerror="this.style.display='none'" />`
+        : "";
       card.innerHTML = `
+        ${thumbnailHtml}
         <div class="flex items-start justify-between gap-4 mb-3">
           <div class="flex-1 min-w-0">
             <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">#${index + 1}</div>
@@ -2040,6 +2162,14 @@
       renderSelectedSources(els.searchSelectedSources, data.selected_sources || []);
       renderMeaningGroups(els.searchMeaningGroups, data.meaning_groups || []);
       renderComparePanel(els.searchComparePanel, state.searchCompare, "search");
+      // Serper-unique features
+      renderAnswerBox(els.searchAnswerBox, data.answer_box);
+      renderKnowledgeGraph(els.searchKnowledgeGraph, data.knowledge_graph);
+      renderPeopleAlsoAsk(els.searchPeopleAlsoAsk, data.people_also_ask);
+      renderRelatedSearches(els.searchRelatedSearches, data.related_searches, q => {
+        document.getElementById("searchQuery").value = q;
+        runSearch();
+      });
     }
 
     function renderSummaryHtml(summary, points) {
@@ -2087,6 +2217,10 @@
       renderMeaningGroups(els.researchMeaningGroups, []);
       renderResearchResults(els.researchResultsCards, []);
       els.researchComparePanel.innerHTML = "";
+      // Clear Serper panels
+      if (els.researchAnswerBox) { els.researchAnswerBox.classList.add("hidden"); els.researchAnswerBox.innerHTML = ""; }
+      if (els.researchPeopleAlsoAsk) { els.researchPeopleAlsoAsk.classList.add("hidden"); els.researchPeopleAlsoAsk.innerHTML = ""; }
+      if (els.researchRelatedSearches) { els.researchRelatedSearches.classList.add("hidden"); els.researchRelatedSearches.innerHTML = ""; }
     }
 
     async function runSearch() {
@@ -2156,6 +2290,13 @@
         renderMeaningGroups(els.researchMeaningGroups, data.meaning_groups || []);
         renderResearchResults(els.researchResultsCards, state.researchResults);
         renderComparePanel(els.researchComparePanel, state.researchCompare, "research");
+        // Serper-unique features
+        renderAnswerBox(els.researchAnswerBox, data.answer_box);
+        renderPeopleAlsoAsk(els.researchPeopleAlsoAsk, data.people_also_ask);
+        renderRelatedSearches(els.researchRelatedSearches, data.related_searches, q => {
+          document.getElementById("researchQuery").value = q;
+          runResearch();
+        });
         setDebugJson(data);
         setStatus(data.ambiguous ? `Research completed for "${body.query}" with ambiguity groups.` : `Research completed for "${body.query}".`);
       } catch (err) {
