@@ -1,11 +1,11 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.schemas.search import SearchHistoryItem, SearchRequest, SearchResponse
+from app.schemas.search import QueryAnalysisResponse, SearchHistoryItem, SearchRequest, SearchResponse
 from app.services.search import SearchService
 
 router = APIRouter(prefix="/search", tags=["search"])
@@ -47,3 +47,22 @@ def get_search_history(
     service = SearchService(db)
     rows = service.list_history(limit=limit, session_id=session_id)
     return [SearchHistoryItem.model_validate(row) for row in rows]
+
+
+@router.get(
+    "/analyze",
+    responses={
+        400: {"description": "Validation error"},
+    },
+)
+def analyze_query(
+    q: Annotated[str, Query(min_length=2, max_length=500)],
+    topic: Annotated[Literal["general", "news", "finance"], Query()] = "general",
+    db: Annotated[Session, Depends(get_db)] = None,
+) -> QueryAnalysisResponse:
+    service = SearchService(db)
+    try:
+        data = service.analyze_query(q, topic=topic)
+        return QueryAnalysisResponse(**data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

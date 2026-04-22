@@ -21,25 +21,35 @@ settings = get_settings()
 Base.metadata.create_all(bind=engine)
 
 
-def ensure_search_history_session_column() -> None:
-    """Add session_id to search_history for existing databases if missing."""
+def ensure_search_history_columns() -> None:
+    """Add search_history columns for existing databases if missing."""
     try:
         inspector = inspect(engine)
         if "search_history" not in inspector.get_table_names():
             return
 
         columns = {column["name"] for column in inspector.get_columns("search_history")}
-        if "session_id" in columns:
+        column_patches = {
+            "session_id": "ALTER TABLE search_history ADD COLUMN session_id VARCHAR(128)",
+            "ambiguous": "ALTER TABLE search_history ADD COLUMN ambiguous BOOLEAN DEFAULT 0",
+            "selected_source_count": "ALTER TABLE search_history ADD COLUMN selected_source_count INTEGER DEFAULT 0",
+            "meaning_group_count": "ALTER TABLE search_history ADD COLUMN meaning_group_count INTEGER DEFAULT 0",
+            "has_summary": "ALTER TABLE search_history ADD COLUMN has_summary BOOLEAN DEFAULT 0",
+        }
+
+        missing = [statement for name, statement in column_patches.items() if name not in columns]
+        if not missing:
             return
 
         with engine.begin() as connection:
-            connection.execute(text("ALTER TABLE search_history ADD COLUMN session_id VARCHAR(128)"))
+            for statement in missing:
+                connection.execute(text(statement))
     except Exception:
         # Non-fatal schema upgrade path for local dev databases.
         pass
 
 
-ensure_search_history_session_column()
+ensure_search_history_columns()
 
 cors_origins = settings.cors_origins_list
 allow_credentials = "*" not in cors_origins

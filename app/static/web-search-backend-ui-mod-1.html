@@ -74,18 +74,54 @@
       <main class="lg:col-span-9 xl:col-span-10 space-y-6">
         <!-- DASHBOARD -->
         <section id="tab-dashboard" class="tab-panel">
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
-            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-5">
-              <div class="text-sm text-slate-400 mb-2">Last query</div>
-              <div id="dashboardLastQuery" class="text-2xl font-semibold break-words">-</div>
+          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
+              <div>
+                <h2 class="text-2xl font-semibold">Workspace cockpit</h2>
+                <p class="text-slate-400">Jump between workflows, watch activity, and keep momentum without leaving this screen.</p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button id="dashboardGoSearch" class="rounded-2xl bg-cyan-600 hover:bg-cyan-500 px-4 py-2.5 text-sm font-medium">Open Search</button>
+                <button id="dashboardGoResearch" class="rounded-2xl bg-fuchsia-600 hover:bg-fuchsia-500 px-4 py-2.5 text-sm font-medium">Open Research</button>
+                <button id="dashboardGoExtract" class="rounded-2xl bg-amber-600 hover:bg-amber-500 px-4 py-2.5 text-sm font-medium">Open Extract</button>
+                <button id="dashboardLoadHistories" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-sm font-medium">Load Histories</button>
+              </div>
             </div>
-            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-5">
-              <div class="text-sm text-slate-400 mb-2">Selected sources</div>
-              <div id="dashboardSelectedSources" class="text-2xl font-semibold">0</div>
+            <div id="dashboardStatusLog" class="rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">Ready.</div>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+            <div class="xl:col-span-2 rounded-3xl bg-slate-900 border border-slate-800 p-6">
+              <div class="flex items-center justify-between gap-4 mb-4">
+                <h3 class="text-xl font-semibold">Live activity</h3>
+                <button id="dashboardClearActivity" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-3 py-2 text-xs font-medium">Clear</button>
+              </div>
+              <div id="dashboardActivityList" class="space-y-3"></div>
             </div>
-            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-5">
-              <div class="text-sm text-slate-400 mb-2">Ambiguous</div>
-              <div id="dashboardAmbiguous" class="text-2xl font-semibold">No</div>
+            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
+              <h3 class="text-xl font-semibold mb-4">Workspace pulse</h3>
+              <div class="space-y-3 text-sm">
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
+                  <div class="text-slate-400">Last action</div>
+                  <div id="dashboardLastAction" class="text-slate-200 mt-1">-</div>
+                </div>
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
+                  <div class="text-slate-400">Search runs</div>
+                  <div id="dashboardSearchRuns" class="text-slate-200 mt-1">0</div>
+                </div>
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
+                  <div class="text-slate-400">Research runs</div>
+                  <div id="dashboardResearchRuns" class="text-slate-200 mt-1">0</div>
+                </div>
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
+                  <div class="text-slate-400">Extract runs</div>
+                  <div id="dashboardExtractRuns" class="text-slate-200 mt-1">0</div>
+                </div>
+                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
+                  <div class="text-slate-400">Compared items</div>
+                  <div id="dashboardCompareItems" class="text-slate-200 mt-1">0</div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -177,17 +213,7 @@
 
               <div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">
                 <h3 class="text-sm font-semibold text-slate-200 mb-3">Date Filters</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                  <div>
-                    <label for="searchTimeRange" class="block text-sm text-slate-300 mb-2">Time Range</label>
-                    <select id="searchTimeRange" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3">
-                      <option value="">none</option>
-                      <option value="day">day</option>
-                      <option value="week" selected>week</option>
-                      <option value="month">month</option>
-                      <option value="year">year</option>
-                    </select>
-                  </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   <div>
                     <label for="searchMaxAgeDays" class="block text-sm text-slate-300 mb-2">Max News Age (days)</label>
                     <input id="searchMaxAgeDays" type="number" min="0" max="3650" class="w-full rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3" value="7" />
@@ -206,6 +232,7 @@
 
             <div class="flex flex-wrap gap-3 mt-6">
               <button id="searchBtn" class="rounded-2xl bg-cyan-600 hover:bg-cyan-500 px-4 py-3 font-medium">Run Search</button>
+              <button id="searchAnalyzeBtn" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">Analyze Query</button>
               <button id="searchNewsPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">News Preset</button>
               <button id="searchWikipediaPreset" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">Wikipedia Preset</button>
             </div>
@@ -260,6 +287,10 @@
                   <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
                     <div class="text-slate-400">Selected sources</div>
                     <div id="searchSelectedCount" class="text-slate-200 mt-1">0</div>
+                  </div>
+                  <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
+                    <div class="text-slate-400">Query analysis</div>
+                    <div id="searchAnalysisBox" class="text-slate-200 mt-1 whitespace-pre-wrap">No analysis yet.</div>
                   </div>
                 </div>
               </div>
@@ -734,7 +765,7 @@
 
     const PERSISTED_FIELD_IDS = [
       "searchQuery", "searchTopic", "searchLanguage", "searchMaxResults", "searchIncludeDomains", "searchExcludeDomains",
-      "searchTimeRange", "searchMaxAgeDays", "searchStartDate", "searchEndDate", "searchSort",
+      "searchMaxAgeDays", "searchStartDate", "searchEndDate", "searchSort",
       "researchQuery", "researchTopic", "researchLanguage", "researchMaxResults", "researchIncludeDomains", "researchExcludeDomains",
       "researchTimeRange", "researchMaxAgeDays", "researchStartDate", "researchEndDate",
       "extractUrl",
@@ -744,12 +775,21 @@
     const els = {
       pingApiBtn: document.getElementById("pingApiBtn"),
 
-      dashboardLastQuery: document.getElementById("dashboardLastQuery"),
-      dashboardSelectedSources: document.getElementById("dashboardSelectedSources"),
-      dashboardAmbiguous: document.getElementById("dashboardAmbiguous"),
       dashboardStatusLog: document.getElementById("dashboardStatusLog"),
+      dashboardGoSearch: document.getElementById("dashboardGoSearch"),
+      dashboardGoResearch: document.getElementById("dashboardGoResearch"),
+      dashboardGoExtract: document.getElementById("dashboardGoExtract"),
+      dashboardLoadHistories: document.getElementById("dashboardLoadHistories"),
+      dashboardClearActivity: document.getElementById("dashboardClearActivity"),
+      dashboardActivityList: document.getElementById("dashboardActivityList"),
+      dashboardLastAction: document.getElementById("dashboardLastAction"),
+      dashboardSearchRuns: document.getElementById("dashboardSearchRuns"),
+      dashboardResearchRuns: document.getElementById("dashboardResearchRuns"),
+      dashboardExtractRuns: document.getElementById("dashboardExtractRuns"),
+      dashboardCompareItems: document.getElementById("dashboardCompareItems"),
 
       searchBtn: document.getElementById("searchBtn"),
+      searchAnalyzeBtn: document.getElementById("searchAnalyzeBtn"),
       searchWikipediaPreset: document.getElementById("searchWikipediaPreset"),
       searchNewsPreset: document.getElementById("searchNewsPreset"),
       searchSort: document.getElementById("searchSort"),
@@ -760,6 +800,7 @@
       searchResponseTime: document.getElementById("searchResponseTime"),
       searchRequestId: document.getElementById("searchRequestId"),
       searchSelectedCount: document.getElementById("searchSelectedCount"),
+      searchAnalysisBox: document.getElementById("searchAnalysisBox"),
       searchSelectedSources: document.getElementById("searchSelectedSources"),
       searchMeaningGroups: document.getElementById("searchMeaningGroups"),
       searchComparePanel: document.getElementById("searchComparePanel"),
@@ -813,6 +854,11 @@
       searchCompare: [],
       researchCompare: [],
       advancedTaskId: "",
+      searchRuns: 0,
+      researchRuns: 0,
+      extractRuns: 0,
+      lastAction: "Ready",
+      activity: [],
     };
 
     function storageKey(key) {
@@ -842,9 +888,66 @@
     }
 
     function setStatus(message) {
+      const stamp = new Date().toLocaleTimeString();
+      state.lastAction = `${stamp} - ${message}`;
       if (els.dashboardStatusLog) {
         els.dashboardStatusLog.textContent = message;
       }
+      pushDashboardActivity(message);
+      refreshDashboardPulse();
+    }
+
+    function refreshDashboardPulse() {
+      if (els.dashboardLastAction) {
+        els.dashboardLastAction.textContent = state.lastAction || "-";
+      }
+      if (els.dashboardSearchRuns) {
+        els.dashboardSearchRuns.textContent = String(state.searchRuns);
+      }
+      if (els.dashboardResearchRuns) {
+        els.dashboardResearchRuns.textContent = String(state.researchRuns);
+      }
+      if (els.dashboardExtractRuns) {
+        els.dashboardExtractRuns.textContent = String(state.extractRuns);
+      }
+      if (els.dashboardCompareItems) {
+        const comparedCount = (state.searchCompare?.length || 0) + (state.researchCompare?.length || 0);
+        els.dashboardCompareItems.textContent = String(comparedCount);
+      }
+    }
+
+    function renderDashboardActivity() {
+      if (!els.dashboardActivityList) return;
+      if (!state.activity.length) {
+        renderEmpty(els.dashboardActivityList, "No activity yet. Run a quick action to start.");
+        return;
+      }
+
+      els.dashboardActivityList.innerHTML = "";
+      state.activity.slice(0, 8).forEach(entry => {
+        const card = document.createElement("div");
+        card.className = "rounded-2xl bg-slate-950 border border-slate-800 p-3";
+        card.innerHTML = `
+          <div class="text-xs text-slate-500 mb-1">${escapeHtml(entry.time)}</div>
+          <div class="text-sm text-slate-200">${escapeHtml(entry.message)}</div>
+        `;
+        els.dashboardActivityList.appendChild(card);
+      });
+    }
+
+    function pushDashboardActivity(message) {
+      const entry = {
+        time: new Date().toLocaleTimeString(),
+        message,
+      };
+      state.activity = [entry, ...state.activity].slice(0, 12);
+      renderDashboardActivity();
+    }
+
+    function clearDashboardActivity() {
+      state.activity = [];
+      renderDashboardActivity();
+      setStatus("Dashboard activity cleared.");
     }
 
     function pretty(obj) {
@@ -1034,9 +1137,7 @@
     function updateDashboardFromResearch(data) {
       state.lastResponse = data;
       state.lastQuery = data?.query || "";
-      els.dashboardLastQuery.textContent = data?.query || "-";
-      els.dashboardSelectedSources.textContent = String((data?.selected_sources || []).length);
-      els.dashboardAmbiguous.textContent = data?.ambiguous ? "Yes" : "No";
+      refreshDashboardPulse();
     }
 
     function persistField(id) {
@@ -1196,6 +1297,7 @@
       }
 
       renderComparePanel(kind === "search" ? els.searchComparePanel : els.researchComparePanel, state[stateKey], kind);
+      refreshDashboardPulse();
       if (kind === "search") {
         renderSearchCards(els.searchCards, sortResults(state.searchResults, els.searchSort?.value || "relevance"));
       } else {
@@ -1395,10 +1497,18 @@
         card.className = "rounded-2xl bg-slate-950 border border-slate-800 p-4";
         const createdAt = formatCreatedAt(item.created_at);
         if (type === "search") {
+          const ambiguousBadge = item.ambiguous
+            ? '<span class="rounded-full px-2 py-1 bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/30 text-xs">ambiguous</span>'
+            : '<span class="rounded-full px-2 py-1 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-xs">clear</span>';
+          const summaryBadge = item.has_summary
+            ? '<span class="rounded-full px-2 py-1 bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 text-xs">summary</span>'
+            : '<span class="rounded-full px-2 py-1 bg-slate-800 text-slate-300 border border-slate-700 text-xs">no summary</span>';
           card.innerHTML = `
             <div class="font-medium mb-1">${escapeHtml(item.query || "-")}</div>
             <div class="text-sm text-slate-400 mb-2">topic: ${escapeHtml(item.topic || "-")}</div>
             <div class="text-sm text-slate-300 mb-2">results: ${item.result_count ?? 0}</div>
+            <div class="text-xs text-slate-400 mb-2">selected sources: ${item.selected_source_count ?? 0} · meaning groups: ${item.meaning_group_count ?? 0}</div>
+            <div class="flex flex-wrap gap-2 mb-2">${ambiguousBadge}${summaryBadge}</div>
             ${createdAt ? `<div class="text-xs text-slate-500 mb-2">${escapeHtml(createdAt)}</div>` : ""}
             ${item.answer ? `<div class="text-sm text-slate-400 line-clamp-4">${escapeHtml(item.answer)}</div>` : ""}
           `;
@@ -1418,6 +1528,33 @@
       state.lastResponse = data;
     }
 
+    function renderSearchAnalysis(data = null) {
+      if (!els.searchAnalysisBox) return;
+      if (!data) {
+        els.searchAnalysisBox.textContent = "No analysis yet.";
+        return;
+      }
+
+      const lines = [
+        `Topic: ${data.topic || "-"}`,
+        `Token count: ${data.token_count ?? 0}`,
+        `Short query: ${data.is_short_query ? "yes" : "no"}`,
+        `Ambiguous likely: ${data.ambiguous_likely ? "yes" : "no"}`,
+      ];
+
+      if (data.recommended_topic && data.recommended_topic !== data.topic) {
+        lines.push(`Recommended topic: ${data.recommended_topic}`);
+      }
+
+      const suggestions = Array.isArray(data.suggested_queries) ? data.suggested_queries : [];
+      if (suggestions.length) {
+        lines.push("Suggestions:");
+        suggestions.slice(0, 3).forEach(item => lines.push(`- ${item}`));
+      }
+
+      els.searchAnalysisBox.textContent = lines.join("\n");
+    }
+
     function resetSearchUi(errorMessage = "No results yet.") {
       els.searchMeta.textContent = errorMessage;
       els.searchSummaryBox.textContent = errorMessage === "No results yet." ? "No summary yet." : errorMessage;
@@ -1425,10 +1562,32 @@
       els.searchResponseTime.textContent = "-";
       els.searchRequestId.textContent = "-";
       els.searchSelectedCount.textContent = "0";
+      renderSearchAnalysis(null);
       renderSearchCards(els.searchCards, []);
       renderSelectedSources(els.searchSelectedSources, []);
       renderMeaningGroups(els.searchMeaningGroups, []);
       els.searchComparePanel.innerHTML = "";
+    }
+
+    async function analyzeSearchQuery() {
+      setLoading(els.searchAnalyzeBtn, true, "Analyzing...");
+      persistAllFields();
+      try {
+        const query = document.getElementById("searchQuery").value;
+        const topic = document.getElementById("searchTopic").value;
+        const data = await api(`/search/analyze?q=${encodeURIComponent(query)}&topic=${encodeURIComponent(topic)}`);
+        renderSearchAnalysis(data);
+        setDebugJson(data);
+        setStatus(`Query analysis completed for "${query}".`);
+      } catch (err) {
+        if (els.searchAnalysisBox) {
+          els.searchAnalysisBox.textContent = err.message;
+        }
+        setDebugJson({ error: err.message });
+        setStatus(`Query analysis failed: ${err.message}`);
+      } finally {
+        setLoading(els.searchAnalyzeBtn, false);
+      }
     }
 
     function renderSearchView(data) {
@@ -1483,6 +1642,7 @@
         };
 
         const data = await api("/search", "POST", body);
+        state.searchRuns += 1;
         state.lastQuery = body.query;
         renderSearchView(data);
         setDebugJson(data);
@@ -1513,6 +1673,7 @@
         };
 
         const data = await api("/research", "POST", body);
+        state.researchRuns += 1;
         updateDashboardFromResearch(data);
         state.researchResponse = data;
         state.researchResults = Array.isArray(data.results) ? data.results : [];
@@ -1548,6 +1709,7 @@
       try {
         const body = { url: document.getElementById("extractUrl").value };
         const data = await api("/extract", "POST", body);
+        state.extractRuns += 1;
         els.extractMeta.textContent = `${data.title || "Untitled"} · ${data.source || "unknown source"} · ${data.content_length || 0} chars`;
         els.extractText.textContent = data.extracted_text || "";
         renderPassages(els.extractPassages, data.important_passages || []);
@@ -1723,7 +1885,19 @@
 
     function wireActionButtons() {
       if (els.pingApiBtn) els.pingApiBtn.addEventListener("click", pingApi);
+      if (els.dashboardGoSearch) els.dashboardGoSearch.addEventListener("click", () => activateTab("search"));
+      if (els.dashboardGoResearch) els.dashboardGoResearch.addEventListener("click", () => activateTab("research"));
+      if (els.dashboardGoExtract) els.dashboardGoExtract.addEventListener("click", () => activateTab("extract"));
+      if (els.dashboardLoadHistories) {
+        els.dashboardLoadHistories.addEventListener("click", async () => {
+          activateTab("histories");
+          await loadSearchHistory();
+          await loadExtractHistory();
+        });
+      }
+      if (els.dashboardClearActivity) els.dashboardClearActivity.addEventListener("click", clearDashboardActivity);
       els.searchBtn.addEventListener("click", runSearch);
+      els.searchAnalyzeBtn.addEventListener("click", analyzeSearchQuery);
       els.researchBtn.addEventListener("click", runResearch);
       els.extractBtn.addEventListener("click", runExtract);
       els.loadSearchHistoryBtn.addEventListener("click", loadSearchHistory);
@@ -1746,7 +1920,6 @@
         document.getElementById("searchMaxResults").value = "5";
         document.getElementById("searchIncludeDomains").value = defaultIncludeForPreset("search", "general");
         document.getElementById("searchExcludeDomains").value = "";
-        document.getElementById("searchTimeRange").value = "";
         document.getElementById("searchMaxAgeDays").value = "0";
         document.getElementById("searchStartDate").value = "";
         document.getElementById("searchEndDate").value = "";
@@ -1759,7 +1932,6 @@
         document.getElementById("searchMaxResults").value = "5";
         document.getElementById("searchIncludeDomains").value = defaultIncludeForPreset("search", "news");
         document.getElementById("searchExcludeDomains").value = "";
-        document.getElementById("searchTimeRange").value = "week";
         document.getElementById("searchMaxAgeDays").value = "7";
         document.getElementById("searchStartDate").value = "";
         document.getElementById("searchEndDate").value = "";
@@ -1815,6 +1987,8 @@
       activateTab(restoreActiveTab());
       updateApiStatus(null, "Connecting to backend...");
       pingApi();
+      renderDashboardActivity();
+      refreshDashboardPulse();
       resetSearchUi();
       resetResearchUi();
     }

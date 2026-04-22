@@ -31,6 +31,16 @@ class SearchRequest(BaseModel):
     auto_parameters: bool = True
 
 
+class QueryAnalysisResponse(BaseModel):
+    query: str
+    topic: str
+    token_count: int
+    is_short_query: bool
+    ambiguous_likely: bool
+    recommended_topic: str
+    suggested_queries: list[str] = Field(default_factory=list)
+
+
 class SearchResultItem(BaseModel):
     title: str
     url: HttpUrl
@@ -114,4 +124,8 @@ class SearchHistoryItem(BaseModel):
     provider: str
     result_count: int
     answer: str | None = None
+    ambiguous: bool = False
+    selected_source_count: int = 0
+    meaning_group_count: int = 0
+    has_summary: bool = False
     created_at: datetime

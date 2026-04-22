@@ -36,6 +36,50 @@ class SearchService:
     def _is_short_general_query(self, request: SearchRequest) -> bool:
         return request.topic == "general" and len(query_terms(request.query)) <= 2
 
+    def analyze_query(self, query: str, topic: str = "general") -> dict:
+        """Return lightweight query diagnostics for UI guidance."""
+        normalized = query.strip()
+        if len(normalized) < 2:
+            raise ValueError("Query must contain at least 2 characters.")
+
+        terms = query_terms(normalized)
+        is_short_query = len(terms) <= 2
+        ambiguous_likely = topic == "general" and is_short_query
+
+        topic_hints = {
+            "news": {"news", "latest", "today", "breaking", "update"},
+            "finance": {"stock", "stocks", "market", "economy", "inflation", "earnings"},
+        }
+        lowered_terms = {term.lower() for term in terms}
+        recommended_topic = topic
+        for candidate_topic, hints in topic_hints.items():
+            if lowered_terms.intersection(hints):
+                recommended_topic = candidate_topic
+                break
+
+        suggested_queries: list[str] = []
+        if ambiguous_likely:
+            suggested_queries = [
+                f"{normalized} meaning",
+                f"{normalized} overview",
+                f"{normalized} wikipedia",
+            ]
+        elif is_short_query:
+            suggested_queries = [
+                f"{normalized} latest developments",
+                f"{normalized} key facts",
+            ]
+
+        return {
+            "query": normalized,
+            "topic": topic,
+            "token_count": len(terms),
+            "is_short_query": is_short_query,
+            "ambiguous_likely": ambiguous_likely,
+            "recommended_topic": recommended_topic,
+            "suggested_queries": suggested_queries,
+        }
+
     def _merge_results(self, *result_lists: list[dict]) -> list[dict]:
         merged: list[dict] = []
         seen_urls: set[str] = set()
@@ -213,13 +257,18 @@ class SearchService:
                 )
 
         if session_id:
+            final_summary = extracted_summary or summary or primary_payload.get("answer")
             history_row = SearchHistory(
                 session_id=session_id,
                 query=request.query,
                 topic=request.topic,
                 provider=self.provider.name,
                 result_count=len(results),
-                answer=extracted_summary or summary,
+                answer=final_summary,
+                ambiguous=ambiguous,
+                selected_source_count=len(selected_sources),
+                meaning_group_count=len(meaning_groups),
+                has_summary=bool(final_summary),
             )
             self.db.add(history_row)
             self.db.commit()

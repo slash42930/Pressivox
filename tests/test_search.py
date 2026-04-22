@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
@@ -79,3 +80,55 @@ def test_search_endpoint_returns_rich_ui_metadata(monkeypatch) -> None:
     assert body["selected_sources"][0]["meaning"] == "planet"
     assert body["meaning_groups"][0]["meaning"] == "planet"
     assert body["request_id"] == "req-search-123"
+
+
+def test_search_analyze_endpoint_returns_guidance(monkeypatch) -> None:
+    def fake_analyze_query(self, query, topic="general"):
+        return {
+            "query": query,
+            "topic": topic,
+            "token_count": 1,
+            "is_short_query": True,
+            "ambiguous_likely": True,
+            "recommended_topic": "general",
+            "suggested_queries": ["Mercury meaning", "Mercury overview"],
+        }
+
+    monkeypatch.setattr("app.api.routes.search.SearchService.analyze_query", fake_analyze_query)
+
+    response = client.get("/api/v1/search/analyze", params={"q": "Mercury", "topic": "general"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ambiguous_likely"] is True
+    assert body["token_count"] == 1
+    assert body["suggested_queries"][0] == "Mercury meaning"
+
+
+def test_search_history_includes_ux_metadata(monkeypatch) -> None:
+    class Row:
+        id = 1
+        query = "Mercury"
+        topic = "general"
+        provider = "stub-provider"
+        result_count = 6
+        answer = "summary"
+        ambiguous = True
+        selected_source_count = 3
+        meaning_group_count = 2
+        has_summary = True
+        created_at = datetime.now(timezone.utc)
+
+    def fake_list_history(self, limit=20, session_id=None):
+        return [Row()]
+
+    monkeypatch.setattr("app.api.routes.search.SearchService.list_history", fake_list_history)
+
+    response = client.get("/api/v1/search/history", headers={"X-Session-Id": "session-1"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body[0]["ambiguous"] is True
+    assert body[0]["selected_source_count"] == 3
+    assert body[0]["meaning_group_count"] == 2
+    assert body[0]["has_summary"] is True
