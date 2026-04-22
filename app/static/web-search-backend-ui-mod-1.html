@@ -68,7 +68,6 @@
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-800 hover:bg-slate-700 transition" data-tab="dashboard">Dashboard</button>
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="search">Search</button>
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="research">Research</button>
-            <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="advanced-research">Advanced Research</button>
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="extract">Extract</button>
             <button class="tab-btn w-full text-left rounded-2xl px-4 py-3 bg-slate-900 hover:bg-slate-800 transition" data-tab="info">Info</button>
             <div class="border-t border-slate-700 my-2"></div>
@@ -550,67 +549,6 @@
           </div>
         </section>
 
-        <!-- ADVANCED RESEARCH -->
-        <section id="tab-advanced-research" class="tab-panel hidden">
-          <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
-            <div class="mb-6">
-              <h2 class="text-2xl font-semibold">Advanced Research</h2>
-              <p class="text-slate-400">Submit a Tavily research task and get the full result automatically when it's ready.</p>
-            </div>
-            <div class="mb-6 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">
-              Use this panel for deeper asynchronous research jobs. It complements the standard Research tab instead of replacing it.
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              <div class="xl:col-span-2">
-                <label for="advancedResearchQuery" class="block text-sm text-slate-300 mb-2">Query</label>
-                <input id="advancedResearchQuery" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="AI regulation in Europe" />
-              </div>
-              <div>
-                <label for="advancedResearchFocus" class="block text-sm text-slate-300 mb-2">Focus</label>
-                <input id="advancedResearchFocus" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" placeholder="policy, market, science" />
-              </div>
-              <div>
-                <label for="advancedResearchMaxSources" class="block text-sm text-slate-300 mb-2">Max Sources</label>
-                <input id="advancedResearchMaxSources" type="number" min="1" max="50" class="w-full rounded-2xl bg-slate-950 border border-slate-700 px-4 py-3" value="10" />
-              </div>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3 mt-6">
-              <button id="advancedResearchSubmitBtn" class="rounded-2xl bg-cyan-600 hover:bg-cyan-500 px-4 py-3 font-medium">Submit</button>
-              <span id="advancedResearchAutoPollBadge" class="hidden rounded-2xl bg-cyan-900/40 border border-cyan-700/40 px-3 py-2 text-xs text-cyan-300 font-medium"></span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6">
-              <h3 class="text-xl font-semibold mb-4">Task status</h3>
-              <div class="space-y-3 text-sm">
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400">Task id</div>
-                  <div id="advancedResearchTaskId" class="text-slate-200 mt-1 break-all">-</div>
-                </div>
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400">Status</div>
-                  <div id="advancedResearchStatus" class="text-slate-200 mt-1">Idle</div>
-                </div>
-                <div class="rounded-2xl bg-slate-950 border border-slate-800 p-3">
-                  <div class="text-slate-400">Created at</div>
-                  <div id="advancedResearchCreatedAt" class="text-slate-200 mt-1">-</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="xl:col-span-2 rounded-3xl bg-slate-900 border border-slate-800 p-6">
-              <div class="flex items-center justify-between gap-4 mb-4">
-                <h3 class="text-xl font-semibold">Task response</h3>
-                <span id="advancedResearchMeta" class="text-sm text-slate-400">No task submitted.</span>
-              </div>
-              <pre id="advancedResearchOutput" class="text-sm text-slate-300 whitespace-pre-wrap max-h-[720px] overflow-auto scrollbar-thin leading-7">No task response yet.</pre>
-            </div>
-          </div>
-        </section>
-
         <!-- EXTRACT -->
         <section id="tab-extract" class="tab-panel hidden">
           <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
@@ -897,8 +835,7 @@
       "searchMaxAgeDays", "searchStartDate", "searchEndDate", "searchSort",
       "researchQuery", "researchTopic", "researchLanguage", "researchMaxResults", "researchIncludeDomains", "researchExcludeDomains",
       "researchTimeRange", "researchMaxAgeDays", "researchStartDate", "researchEndDate",
-      "extractUrl",
-      "advancedResearchQuery", "advancedResearchFocus", "advancedResearchMaxSources"
+      "extractUrl"
     ];
 
     const els = {
@@ -956,14 +893,6 @@
       researchResultMeta: document.getElementById("researchResultMeta"),
       researchComparePanel: document.getElementById("researchComparePanel"),
 
-      advancedResearchSubmitBtn: document.getElementById("advancedResearchSubmitBtn"),
-      advancedResearchAutoPollBadge: document.getElementById("advancedResearchAutoPollBadge"),
-      advancedResearchTaskId: document.getElementById("advancedResearchTaskId"),
-      advancedResearchStatus: document.getElementById("advancedResearchStatus"),
-      advancedResearchCreatedAt: document.getElementById("advancedResearchCreatedAt"),
-      advancedResearchMeta: document.getElementById("advancedResearchMeta"),
-      advancedResearchOutput: document.getElementById("advancedResearchOutput"),
-
       extractBtn: document.getElementById("extractBtn"),
       extractWikiPreset: document.getElementById("extractWikiPreset"),
       extractMeta: document.getElementById("extractMeta"),
@@ -987,15 +916,11 @@
       researchMarkdown: "",
       searchCompare: [],
       researchCompare: [],
-      advancedTaskId: "",
       searchRuns: 0,
       researchRuns: 0,
       extractRuns: 0,
       lastAction: "Ready",
       activity: [],
-      advancedAutoPollTimer: null,
-      advancedAutoPollCountdown: 0,
-      advancedAutoPollCountdownTimer: null,
       dashboardTickerIndex: -1,
       dashboardTickerTimer: null,
       topNews: {
@@ -2103,110 +2028,6 @@
       }
     }
 
-    async function submitAdvancedResearchTask() {
-      setLoading(els.advancedResearchSubmitBtn, true, "Submitting...");
-      persistAllFields();
-      try {
-        const body = {
-          query: document.getElementById("advancedResearchQuery").value,
-          focus: optionalValue(document.getElementById("advancedResearchFocus").value),
-          max_sources: Number(document.getElementById("advancedResearchMaxSources").value),
-        };
-        const data = await api("/research/tasks", "POST", body);
-        state.advancedTaskId = data.task_id || "";
-        localStorage.setItem(storageKey("advancedTaskId"), state.advancedTaskId);
-        els.advancedResearchTaskId.textContent = data.task_id || "-";
-        els.advancedResearchStatus.textContent = data.status || "submitted";
-        els.advancedResearchCreatedAt.textContent = data.created_at || "-";
-        els.advancedResearchMeta.textContent = "Task submitted. Auto-polling started.";
-        scheduleAdvancedAutoPoll();
-        els.advancedResearchOutput.textContent = pretty(data);
-        setDebugJson(data);
-        setStatus(`Advanced research task submitted for "${body.query}".`);
-      } catch (err) {
-        els.advancedResearchMeta.textContent = "Task submission failed.";
-        els.advancedResearchOutput.textContent = err.message;
-        setDebugJson({ error: err.message });
-        setStatus(`Advanced research submission failed: ${err.message}`);
-      } finally {
-        setLoading(els.advancedResearchSubmitBtn, false);
-      }
-    }
-
-    const ADVANCED_POLL_INTERVAL_SECS = 8;
-    const ADVANCED_POLL_TERMINAL = new Set(["completed", "failed", "cancelled", "error", "done", "success"]);
-
-    function stopAdvancedAutoPoll() {
-      if (state.advancedAutoPollTimer) {
-        clearTimeout(state.advancedAutoPollTimer);
-        state.advancedAutoPollTimer = null;
-      }
-      if (state.advancedAutoPollCountdownTimer) {
-        clearInterval(state.advancedAutoPollCountdownTimer);
-        state.advancedAutoPollCountdownTimer = null;
-      }
-      state.advancedAutoPollCountdown = 0;
-      if (els.advancedResearchAutoPollBadge) {
-        els.advancedResearchAutoPollBadge.textContent = "";
-        els.advancedResearchAutoPollBadge.classList.add("hidden");
-      }
-    }
-
-    function startAdvancedAutoPollCountdown() {
-      state.advancedAutoPollCountdown = ADVANCED_POLL_INTERVAL_SECS;
-      if (els.advancedResearchAutoPollBadge) {
-        els.advancedResearchAutoPollBadge.classList.remove("hidden");
-        els.advancedResearchAutoPollBadge.textContent = `Auto-polling in ${state.advancedAutoPollCountdown}s…`;
-      }
-      if (state.advancedAutoPollCountdownTimer) clearInterval(state.advancedAutoPollCountdownTimer);
-      state.advancedAutoPollCountdownTimer = setInterval(() => {
-        state.advancedAutoPollCountdown = Math.max(0, state.advancedAutoPollCountdown - 1);
-        if (els.advancedResearchAutoPollBadge) {
-          els.advancedResearchAutoPollBadge.textContent = state.advancedAutoPollCountdown > 0
-            ? `Auto-polling in ${state.advancedAutoPollCountdown}s…`
-            : "Polling now…";
-        }
-      }, 1000);
-    }
-
-    function scheduleAdvancedAutoPoll() {
-      stopAdvancedAutoPoll();
-      startAdvancedAutoPollCountdown();
-      state.advancedAutoPollTimer = setTimeout(pollAdvancedResearchTask, ADVANCED_POLL_INTERVAL_SECS * 1000);
-    }
-
-    async function pollAdvancedResearchTask() {
-      const taskId = state.advancedTaskId || localStorage.getItem(storageKey("advancedTaskId")) || "";
-      if (!taskId) { stopAdvancedAutoPoll(); return; }
-      if (state.advancedAutoPollCountdownTimer) {
-        clearInterval(state.advancedAutoPollCountdownTimer);
-        state.advancedAutoPollCountdownTimer = null;
-      }
-      try {
-        const data = await api(`/research/tasks/${taskId}`);
-        const status = (data.status || "unknown").toLowerCase();
-        els.advancedResearchTaskId.textContent = taskId;
-        els.advancedResearchStatus.textContent = data.status || "unknown";
-        els.advancedResearchMeta.textContent = `Result for ${taskId}`;
-        els.advancedResearchOutput.textContent = pretty(data);
-        setDebugJson(data);
-
-        if (ADVANCED_POLL_TERMINAL.has(status)) {
-          stopAdvancedAutoPoll();
-          els.advancedResearchStatus.classList.add("text-emerald-300");
-          setStatus(`Advanced research task completed: ${data.status}.`);
-        } else {
-          scheduleAdvancedAutoPoll();
-        }
-      } catch (err) {
-        stopAdvancedAutoPoll();
-        els.advancedResearchMeta.textContent = "Polling failed.";
-        els.advancedResearchOutput.textContent = err.message;
-        setDebugJson({ error: err.message });
-        setStatus(`Advanced research poll failed: ${err.message}`);
-      }
-    }
-
     async function loadSearchHistory() {
       setLoading(els.loadSearchHistoryBtn, true);
       try {
@@ -2328,7 +2149,6 @@
       els.extractBtn.addEventListener("click", runExtract);
       els.loadSearchHistoryBtn.addEventListener("click", loadSearchHistory);
       els.loadExtractHistoryBtn.addEventListener("click", loadExtractHistory);
-      els.advancedResearchSubmitBtn.addEventListener("click", submitAdvancedResearchTask);
 
       els.researchCopyMarkdownBtn.addEventListener("click", () => copyToClipboard(state.researchMarkdown, "Research markdown copied."));
       els.researchDownloadMarkdownBtn.addEventListener("click", () => {
@@ -2400,11 +2220,6 @@
       document.title = AppConfig.appName;
       updateConfigView();
       restoreAllFields();
-      state.advancedTaskId = localStorage.getItem(storageKey("advancedTaskId")) || "";
-      if (state.advancedTaskId) {
-        els.advancedResearchTaskId.textContent = state.advancedTaskId;
-      }
-
       wireTabButtons();
       wirePersistence();
       wirePresetButtons();
