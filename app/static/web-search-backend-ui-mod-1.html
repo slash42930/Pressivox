@@ -2044,18 +2044,28 @@
 
     function renderSummaryHtml(summary, points) {
       const parts = [];
-      if (summary) {
-        parts.push(`<p class="leading-8 text-slate-100">${escapeHtml(summary)}</p>`);
-      }
       if (points.length) {
-        const heading = summary ? `<div class="text-xs uppercase tracking-wide text-fuchsia-400 font-semibold mb-3">Key Points</div>` : ``;
-        const items = points.map(p =>
-          `<li class="flex items-start gap-3">
+        // Render each point; split "Label: body" so label is styled separately
+        const heading = `<div class="text-xs uppercase tracking-wide text-fuchsia-400 font-semibold mb-3">Key Points</div>`;
+        const items = points.map(p => {
+          const colonIdx = p.indexOf(":");
+          if (colonIdx > 0 && colonIdx < 40) {
+            const label = escapeHtml(p.slice(0, colonIdx).trim());
+            const body  = escapeHtml(p.slice(colonIdx + 1).trim());
+            return `<li class="flex items-start gap-3">
+              <span class="mt-2 w-2 h-2 rounded-full bg-fuchsia-400 shrink-0"></span>
+              <span class="leading-7"><span class="font-semibold text-fuchsia-300">${label}:</span> ${body}</span>
+            </li>`;
+          }
+          return `<li class="flex items-start gap-3">
             <span class="mt-2 w-2 h-2 rounded-full bg-fuchsia-400 shrink-0"></span>
             <span class="leading-7">${escapeHtml(p)}</span>
-          </li>`
-        ).join("");
+          </li>`;
+        }).join("");
         parts.push(`<div class="rounded-2xl bg-slate-950 border border-slate-800 p-4">${heading}<ul class="space-y-3 text-slate-200">${items}</ul></div>`);
+      } else if (summary) {
+        // Fallback: show plain summary paragraph when no structured points
+        parts.push(`<p class="leading-8 text-slate-100">${escapeHtml(summary)}</p>`);
       }
       if (!parts.length) {
         parts.push(`<p class="text-slate-400 text-sm">No summary returned.</p>`);
