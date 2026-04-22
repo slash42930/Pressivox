@@ -555,7 +555,7 @@
           <div class="rounded-3xl bg-slate-900 border border-slate-800 p-6 mb-6">
             <div class="mb-6">
               <h2 class="text-2xl font-semibold">Advanced Research</h2>
-              <p class="text-slate-400">Submit Tavily research tasks, poll their status, and inspect the returned payload without leaving the workspace.</p>
+              <p class="text-slate-400">Submit a Tavily research task and get the full result automatically when it's ready.</p>
             </div>
             <div class="mb-6 rounded-2xl bg-slate-950 border border-slate-800 px-4 py-3 text-sm text-slate-300">
               Use this panel for deeper asynchronous research jobs. It complements the standard Research tab instead of replacing it.
@@ -576,9 +576,9 @@
               </div>
             </div>
 
-            <div class="flex flex-wrap gap-3 mt-6">
-              <button id="advancedResearchSubmitBtn" class="rounded-2xl bg-cyan-600 hover:bg-cyan-500 px-4 py-3 font-medium">Submit Task</button>
-              <button id="advancedResearchPollBtn" class="rounded-2xl bg-slate-800 hover:bg-slate-700 px-4 py-3 font-medium">Poll Task</button>
+            <div class="flex flex-wrap items-center gap-3 mt-6">
+              <button id="advancedResearchSubmitBtn" class="rounded-2xl bg-cyan-600 hover:bg-cyan-500 px-4 py-3 font-medium">Submit</button>
+              <span id="advancedResearchAutoPollBadge" class="hidden rounded-2xl bg-cyan-900/40 border border-cyan-700/40 px-3 py-2 text-xs text-cyan-300 font-medium"></span>
             </div>
           </div>
 
@@ -957,7 +957,7 @@
       researchComparePanel: document.getElementById("researchComparePanel"),
 
       advancedResearchSubmitBtn: document.getElementById("advancedResearchSubmitBtn"),
-      advancedResearchPollBtn: document.getElementById("advancedResearchPollBtn"),
+      advancedResearchAutoPollBadge: document.getElementById("advancedResearchAutoPollBadge"),
       advancedResearchTaskId: document.getElementById("advancedResearchTaskId"),
       advancedResearchStatus: document.getElementById("advancedResearchStatus"),
       advancedResearchCreatedAt: document.getElementById("advancedResearchCreatedAt"),
@@ -993,6 +993,9 @@
       extractRuns: 0,
       lastAction: "Ready",
       activity: [],
+      advancedAutoPollTimer: null,
+      advancedAutoPollCountdown: 0,
+      advancedAutoPollCountdownTimer: null,
       dashboardTickerIndex: -1,
       dashboardTickerTimer: null,
       topNews: {
@@ -2115,7 +2118,8 @@
         els.advancedResearchTaskId.textContent = data.task_id || "-";
         els.advancedResearchStatus.textContent = data.status || "submitted";
         els.advancedResearchCreatedAt.textContent = data.created_at || "-";
-        els.advancedResearchMeta.textContent = "Task submitted. Poll when ready.";
+        els.advancedResearchMeta.textContent = "Task submitted. Auto-polling started.";
+        scheduleAdvancedAutoPoll();
         els.advancedResearchOutput.textContent = pretty(data);
         setDebugJson(data);
         setStatus(`Advanced research task submitted for "${body.query}".`);
@@ -2129,28 +2133,77 @@
       }
     }
 
+    const ADVANCED_POLL_INTERVAL_SECS = 8;
+    const ADVANCED_POLL_TERMINAL = new Set(["completed", "failed", "cancelled", "error", "done", "success"]);
+
+    function stopAdvancedAutoPoll() {
+      if (state.advancedAutoPollTimer) {
+        clearTimeout(state.advancedAutoPollTimer);
+        state.advancedAutoPollTimer = null;
+      }
+      if (state.advancedAutoPollCountdownTimer) {
+        clearInterval(state.advancedAutoPollCountdownTimer);
+        state.advancedAutoPollCountdownTimer = null;
+      }
+      state.advancedAutoPollCountdown = 0;
+      if (els.advancedResearchAutoPollBadge) {
+        els.advancedResearchAutoPollBadge.textContent = "";
+        els.advancedResearchAutoPollBadge.classList.add("hidden");
+      }
+    }
+
+    function startAdvancedAutoPollCountdown() {
+      state.advancedAutoPollCountdown = ADVANCED_POLL_INTERVAL_SECS;
+      if (els.advancedResearchAutoPollBadge) {
+        els.advancedResearchAutoPollBadge.classList.remove("hidden");
+        els.advancedResearchAutoPollBadge.textContent = `Auto-polling in ${state.advancedAutoPollCountdown}s…`;
+      }
+      if (state.advancedAutoPollCountdownTimer) clearInterval(state.advancedAutoPollCountdownTimer);
+      state.advancedAutoPollCountdownTimer = setInterval(() => {
+        state.advancedAutoPollCountdown = Math.max(0, state.advancedAutoPollCountdown - 1);
+        if (els.advancedResearchAutoPollBadge) {
+          els.advancedResearchAutoPollBadge.textContent = state.advancedAutoPollCountdown > 0
+            ? `Auto-polling in ${state.advancedAutoPollCountdown}s…`
+            : "Polling now…";
+        }
+      }, 1000);
+    }
+
+    function scheduleAdvancedAutoPoll() {
+      stopAdvancedAutoPoll();
+      startAdvancedAutoPollCountdown();
+      state.advancedAutoPollTimer = setTimeout(pollAdvancedResearchTask, ADVANCED_POLL_INTERVAL_SECS * 1000);
+    }
+
     async function pollAdvancedResearchTask() {
       const taskId = state.advancedTaskId || localStorage.getItem(storageKey("advancedTaskId")) || "";
-      if (!taskId) {
-        setStatus("No advanced research task id is available yet.");
-        return;
+      if (!taskId) { stopAdvancedAutoPoll(); return; }
+      if (state.advancedAutoPollCountdownTimer) {
+        clearInterval(state.advancedAutoPollCountdownTimer);
+        state.advancedAutoPollCountdownTimer = null;
       }
-      setLoading(els.advancedResearchPollBtn, true, "Polling...");
       try {
         const data = await api(`/research/tasks/${taskId}`);
+        const status = (data.status || "unknown").toLowerCase();
         els.advancedResearchTaskId.textContent = taskId;
         els.advancedResearchStatus.textContent = data.status || "unknown";
-        els.advancedResearchMeta.textContent = `Latest poll for ${taskId}`;
+        els.advancedResearchMeta.textContent = `Result for ${taskId}`;
         els.advancedResearchOutput.textContent = pretty(data);
         setDebugJson(data);
-        setStatus(`Advanced research task ${taskId} polled successfully.`);
+
+        if (ADVANCED_POLL_TERMINAL.has(status)) {
+          stopAdvancedAutoPoll();
+          els.advancedResearchStatus.classList.add("text-emerald-300");
+          setStatus(`Advanced research task completed: ${data.status}.`);
+        } else {
+          scheduleAdvancedAutoPoll();
+        }
       } catch (err) {
-        els.advancedResearchMeta.textContent = "Task poll failed.";
+        stopAdvancedAutoPoll();
+        els.advancedResearchMeta.textContent = "Polling failed.";
         els.advancedResearchOutput.textContent = err.message;
         setDebugJson({ error: err.message });
         setStatus(`Advanced research poll failed: ${err.message}`);
-      } finally {
-        setLoading(els.advancedResearchPollBtn, false);
       }
     }
 
@@ -2276,7 +2329,7 @@
       els.loadSearchHistoryBtn.addEventListener("click", loadSearchHistory);
       els.loadExtractHistoryBtn.addEventListener("click", loadExtractHistory);
       els.advancedResearchSubmitBtn.addEventListener("click", submitAdvancedResearchTask);
-      els.advancedResearchPollBtn.addEventListener("click", pollAdvancedResearchTask);
+
       els.researchCopyMarkdownBtn.addEventListener("click", () => copyToClipboard(state.researchMarkdown, "Research markdown copied."));
       els.researchDownloadMarkdownBtn.addEventListener("click", () => {
         if (!state.researchMarkdown) {
