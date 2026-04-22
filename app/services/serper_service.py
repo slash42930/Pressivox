@@ -111,7 +111,6 @@ class SerperService:
 
         parsed_base = urlparse(url)
         base_host = parsed_base.hostname or ""
-        base_scheme = parsed_base.scheme or "https"
 
         headers = {
             "User-Agent": (
@@ -267,7 +266,7 @@ class SerperService:
             "created_at": created_at,
         }
 
-    async def get_research_task(self, task_id: str) -> dict:
+    def get_research_task(self, task_id: str) -> dict:
         """Retrieve research task results by task ID."""
         if not self.settings.serper_api_key or self.settings.serper_api_key == "replace_me":
             raise ValueError(_MISSING_API_KEY_ERROR)

@@ -7,42 +7,69 @@ from .text_processing import host_root, normalize_text, query_terms
 from .title_analysis import extract_comma_meaning, extract_parenthetical_meaning, is_exact_base_topic
 
 
+# ---------------------------------------------------------------------------
+# Domain name constants — avoid duplicate string literals
+# ---------------------------------------------------------------------------
+_WIKIPEDIA_ORG = "wikipedia.org"
+_BRITANNICA_COM = "britannica.com"
+_NATIONALGEOGRAPHIC_COM = "nationalgeographic.com"
+_REUTERS_COM = "reuters.com"
+_BBC_COM = "bbc.com"
+_WSJ_COM = "wsj.com"
+_FT_COM = "ft.com"
+_ECONOMIST_COM = "economist.com"
+_BLOOMBERG_COM = "bloomberg.com"
+_NATURE_COM = "nature.com"
+_WORLDBANK_ORG = "worldbank.org"
+_IMF_ORG = "imf.org"
+_DIGI24_RO = "digi24.ro"
+_HOTNEWS_RO = "hotnews.ro"
+_G4MEDIA_RO = "g4media.ro"
+_ROMANIA_INSIDER_COM = "romania-insider.com"
+_ADEVARUL_RO = "adevarul.ro"
+_STIRILEPROTV_RO = "stirileprotv.ro"
+_MEDIAFAX_RO = "mediafax.ro"
+_ZF_RO = "zf.ro"
+_ECONOMICA_NET = "economica.net"
+_PROFIT_RO = "profit.ro"
+_BURSA_RO = "bursa.ro"
+
 TRUSTED_GENERAL = {
-    "wikipedia.org": 12,
+    _WIKIPEDIA_ORG: 12,
     "simple.wikipedia.org": 10,
-    "britannica.com": 16,
-    "nationalgeographic.com": 14,
+    _BRITANNICA_COM: 16,
+    _NATIONALGEOGRAPHIC_COM: 14,
     "smithsonianmag.com": 12,
     "nasa.gov": 18,
 }
 
 TRUST_SCORE_BY_DOMAIN = {
-    "reuters.com": 22,
+    _REUTERS_COM: 22,
     "apnews.com": 21,
-    "bbc.com": 20,
+    _BBC_COM: 20,
     "npr.org": 18,
     "pbs.org": 18,
-    "wsj.com": 19,
+    _WSJ_COM: 19,
     "nytimes.com": 18,
     "washingtonpost.com": 17,
-    "ft.com": 19,
-    "economist.com": 19,
-    "bloomberg.com": 19,
+    _FT_COM: 19,
+    _ECONOMIST_COM: 19,
+    _BLOOMBERG_COM: 19,
     "cnbc.com": 16,
     "forbes.com": 14,
     "theguardian.com": 16,
-    "nature.com": 22,
+    _NATURE_COM: 22,
     "science.org": 22,
     "nejm.org": 22,
     "thelancet.com": 22,
     "who.int": 21,
     "cdc.gov": 21,
-    "worldbank.org": 20,
-    "imf.org": 20,
+    _WORLDBANK_ORG: 20,
+    _IMF_ORG: 20,
     "oecd.org": 19,
     "un.org": 18,
-    "wikipedia.org": 14,
-    "britannica.com": 18,
+    _WIKIPEDIA_ORG: 14,
+    _BRITANNICA_COM: 18,
     "nasa.gov": 21,
     "mit.edu": 20,
     "stanford.edu": 20,
@@ -52,26 +79,26 @@ TRUST_SCORE_BY_DOMAIN = {
 }
 
 TRUST_SCORE_RO_BY_DOMAIN = {
-    "digi24.ro": 19,
-    "hotnews.ro": 19,
-    "g4media.ro": 18,
-    "romania-insider.com": 16,
-    "adevarul.ro": 16,
-    "stirileprotv.ro": 18,
+    _DIGI24_RO: 19,
+    _HOTNEWS_RO: 19,
+    _G4MEDIA_RO: 18,
+    _ROMANIA_INSIDER_COM: 16,
+    _ADEVARUL_RO: 16,
+    _STIRILEPROTV_RO: 18,
     "biziday.ro": 17,
     "libertatea.ro": 14,
-    "mediafax.ro": 15,
-    "zf.ro": 17,
-    "economica.net": 16,
-    "profit.ro": 16,
-    "bursa.ro": 15,
+    _MEDIAFAX_RO: 15,
+    _ZF_RO: 17,
+    _ECONOMICA_NET: 16,
+    _PROFIT_RO: 16,
+    _BURSA_RO: 15,
 }
 
 TOPIC_DOMAIN_HINTS = {
     "news": {
-        "reuters.com",
+        _REUTERS_COM,
         "apnews.com",
-        "bbc.com",
+        _BBC_COM,
         "nytimes.com",
         "washingtonpost.com",
         "theguardian.com",
@@ -79,53 +106,53 @@ TOPIC_DOMAIN_HINTS = {
         "dw.com",
     },
     "general": {
-        "wikipedia.org",
-        "britannica.com",
+        _WIKIPEDIA_ORG,
+        _BRITANNICA_COM,
         "smithsonianmag.com",
-        "nationalgeographic.com",
-        "bbc.com",
-        "reuters.com",
+        _NATIONALGEOGRAPHIC_COM,
+        _BBC_COM,
+        _REUTERS_COM,
     },
 }
 
 TOPIC_DOMAIN_HINTS_RO = {
     "news": {
-        "digi24.ro",
-        "hotnews.ro",
-        "g4media.ro",
-        "stirileprotv.ro",
-        "mediafax.ro",
-        "adevarul.ro",
+        _DIGI24_RO,
+        _HOTNEWS_RO,
+        _G4MEDIA_RO,
+        _STIRILEPROTV_RO,
+        _MEDIAFAX_RO,
+        _ADEVARUL_RO,
         "biziday.ro",
-        "romania-insider.com",
+        _ROMANIA_INSIDER_COM,
     },
     "general": {
-        "wikipedia.org",
-        "digi24.ro",
-        "hotnews.ro",
-        "romania-insider.com",
-        "adevarul.ro",
+        _WIKIPEDIA_ORG,
+        _DIGI24_RO,
+        _HOTNEWS_RO,
+        _ROMANIA_INSIDER_COM,
+        _ADEVARUL_RO,
     },
 }
 
 QUERY_INTENT_HINTS = {
-    "football": {"bbc.com", "espn.com", "uefa.com", "fifa.com", "theathletic.com", "goal.com"},
-    "soccer": {"bbc.com", "espn.com", "uefa.com", "fifa.com", "theathletic.com", "goal.com"},
-    "animal": {"nationalgeographic.com", "worldwildlife.org", "iucn.org", "animalplanet.com"},
-    "animals": {"nationalgeographic.com", "worldwildlife.org", "iucn.org", "animalplanet.com"},
-    "economy": {"ft.com", "economist.com", "wsj.com", "bloomberg.com", "imf.org", "worldbank.org"},
-    "finance": {"ft.com", "economist.com", "wsj.com", "bloomberg.com", "imf.org", "worldbank.org"},
-    "inflation": {"ft.com", "economist.com", "wsj.com", "bloomberg.com", "imf.org", "oecd.org"},
-    "ai": {"openai.com", "mit.edu", "stanford.edu", "nature.com", "science.org"},
-    "health": {"who.int", "cdc.gov", "nejm.org", "thelancet.com", "nature.com"},
+    "football": {_BBC_COM, "espn.com", "uefa.com", "fifa.com", "theathletic.com", "goal.com"},
+    "soccer": {_BBC_COM, "espn.com", "uefa.com", "fifa.com", "theathletic.com", "goal.com"},
+    "animal": {_NATIONALGEOGRAPHIC_COM, "worldwildlife.org", "iucn.org", "animalplanet.com"},
+    "animals": {_NATIONALGEOGRAPHIC_COM, "worldwildlife.org", "iucn.org", "animalplanet.com"},
+    "economy": {_FT_COM, _ECONOMIST_COM, _WSJ_COM, _BLOOMBERG_COM, _IMF_ORG, _WORLDBANK_ORG},
+    "finance": {_FT_COM, _ECONOMIST_COM, _WSJ_COM, _BLOOMBERG_COM, _IMF_ORG, _WORLDBANK_ORG},
+    "inflation": {_FT_COM, _ECONOMIST_COM, _WSJ_COM, _BLOOMBERG_COM, _IMF_ORG, "oecd.org"},
+    "ai": {"openai.com", "mit.edu", "stanford.edu", _NATURE_COM, "science.org"},
+    "health": {"who.int", "cdc.gov", "nejm.org", "thelancet.com", _NATURE_COM},
 }
 
 QUERY_INTENT_HINTS_RO = {
-    "fotbal": {"digi24.ro", "hotnews.ro", "g4media.ro", "stirileprotv.ro", "adevarul.ro"},
-    "romania": {"digi24.ro", "hotnews.ro", "g4media.ro", "stirileprotv.ro", "mediafax.ro"},
-    "economie": {"zf.ro", "economica.net", "profit.ro", "bursa.ro", "hotnews.ro"},
-    "inflatie": {"zf.ro", "economica.net", "profit.ro", "bursa.ro", "hotnews.ro"},
-    "politica": {"digi24.ro", "hotnews.ro", "g4media.ro", "adevarul.ro"},
+    "fotbal": {_DIGI24_RO, _HOTNEWS_RO, _G4MEDIA_RO, _STIRILEPROTV_RO, _ADEVARUL_RO},
+    "romania": {_DIGI24_RO, _HOTNEWS_RO, _G4MEDIA_RO, _STIRILEPROTV_RO, _MEDIAFAX_RO},
+    "economie": {_ZF_RO, _ECONOMICA_NET, _PROFIT_RO, _BURSA_RO, _HOTNEWS_RO},
+    "inflatie": {_ZF_RO, _ECONOMICA_NET, _PROFIT_RO, _BURSA_RO, _HOTNEWS_RO},
+    "politica": {_DIGI24_RO, _HOTNEWS_RO, _G4MEDIA_RO, _ADEVARUL_RO},
 }
 
 TOPIC_SCORE_WEIGHTS = {

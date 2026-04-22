@@ -82,7 +82,7 @@ async def get_research_task(
     """Get research task status and results."""
     try:
         service = SerperService()
-        result = await service.get_research_task(task_id=task_id)
+        result = service.get_research_task(task_id=task_id)
         return result
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found.") from exc
