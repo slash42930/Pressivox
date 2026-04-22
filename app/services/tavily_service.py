@@ -31,6 +31,7 @@ class TavilyService:
         """
         task_id = (
             data.get("task_id")
+            or data.get("request_id")
             or data.get("id")
             or data.get("research_id")
             or data.get("job_id")
@@ -138,12 +139,13 @@ class TavilyService:
         headers = self._get_headers()
 
         payload = {
-            "query": query,
-            "max_sources": max_sources,
+            "input": query,
         }
 
         if focus:
             payload["focus"] = focus
+        if max_sources and max_sources > 0:
+            payload["max_sources"] = max_sources
 
         async with httpx.AsyncClient(
             timeout=self.settings.http_timeout_seconds,
@@ -168,14 +170,18 @@ class TavilyService:
         if not self.settings.tavily_api_key:
             raise ValueError(_MISSING_API_KEY_ERROR)
 
-        url = f"{self.settings.tavily_base_url}/research/tasks/{task_id}"
+        primary_url = f"{self.settings.tavily_base_url}/research/{task_id}"
+        fallback_url = f"{self.settings.tavily_base_url}/research/tasks/{task_id}"
         headers = self._get_headers()
 
         async with httpx.AsyncClient(
             timeout=self.settings.http_timeout_seconds,
             trust_env=False,
         ) as client:
-            response = await client.get(url, headers=headers)
+            response = await client.get(primary_url, headers=headers)
+            if response.status_code in {404, 405}:
+                response = await client.get(fallback_url, headers=headers)
+
             response.raise_for_status()
             data = response.json()
 

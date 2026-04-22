@@ -1029,16 +1029,20 @@
     }
 
     function setStatus(message, options = {}) {
-      const { recordActivity = true } = options;
+      const { recordActivity = true, updatePulse = true, updateStatusLog = true } = options;
       const stamp = new Date().toLocaleTimeString();
-      state.lastAction = `${stamp} - ${message}`;
-      if (els.dashboardStatusLog) {
+      if (updatePulse) {
+        state.lastAction = `${stamp} - ${message}`;
+      }
+      if (updateStatusLog && els.dashboardStatusLog) {
         els.dashboardStatusLog.textContent = message;
       }
       if (recordActivity) {
         pushDashboardActivity(message);
       }
-      refreshDashboardPulse();
+      if (updatePulse) {
+        refreshDashboardPulse();
+      }
       rotateDashboardTicker(true);
     }
 
@@ -1494,8 +1498,12 @@
     function updateConfigView() {}
 
     function updateApiStatus(healthy, message = "") {
-      void healthy;
-      if (message) setStatus(message, { recordActivity: false });
+      if (healthy) {
+        return;
+      }
+      if (message) {
+        setStatus(message, { recordActivity: false, updatePulse: false, updateStatusLog: true });
+      }
     }
 
     function updateDashboardFromResearch(data) {
@@ -2350,7 +2358,9 @@
       wireActionButtons();
 
       activateTab(restoreActiveTab());
-      updateApiStatus(null, "Connecting to backend...");
+      if (els.dashboardStatusLog) {
+        els.dashboardStatusLog.textContent = "Ready.";
+      }
       pingApi();
       startDashboardTicker();
       renderDashboardTopNews();
