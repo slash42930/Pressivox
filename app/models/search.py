@@ -13,7 +13,7 @@ class SearchHistory(Base):
     session_id: Mapped[str | None] = mapped_column(String(128), index=True, nullable=True)
     query: Mapped[str] = mapped_column(String(500), index=True)
     topic: Mapped[str] = mapped_column(String(50), default="general")
-    provider: Mapped[str] = mapped_column(String(50), default="tavily")
+    provider: Mapped[str] = mapped_column(String(50), default="serper")
     result_count: Mapped[int] = mapped_column(Integer, default=0)
     answer: Mapped[str | None] = mapped_column(Text, nullable=True)
     ambiguous: Mapped[bool] = mapped_column(Boolean, default=False)

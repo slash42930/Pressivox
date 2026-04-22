@@ -27,7 +27,7 @@ async def run_research(
 ) -> ResearchResponse:
     """Aggregated internal research flow combining search and extraction.
 
-    This is not Tavily's native /research API, but rather an internal flow
+    This is not Serper's native research API, but rather an internal flow
     that leverages search results with content extraction and summarization.
     """
     try:

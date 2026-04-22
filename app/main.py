@@ -9,9 +9,9 @@ from app.api.routes.extract import router as extract_router
 from app.api.routes.health import router as health_router
 from app.api.routes.research import router as research_router
 from app.api.routes.search import router as search_router
-from app.api.routes.tavily_crawl import router as tavily_crawl_router
-from app.api.routes.tavily_map import router as tavily_map_router
-from app.api.routes.tavily_research import router as tavily_research_router
+from app.api.routes.serper_crawl import router as serper_crawl_router
+from app.api.routes.serper_map import router as serper_map_router
+from app.api.routes.serper_research import router as serper_research_router
 from app.core.config import get_settings
 from app.core.database import Base, engine
 from app.models.extracted_document import ExtractedDocument
@@ -59,7 +59,7 @@ BASE_DIR = Path(__file__).resolve().parent
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
-    description="Backend for real-time web and news search using Tavily Search API.",
+    description="Backend for real-time web and news search using Serper Search API.",
 )
 
 app.add_middleware(
@@ -76,6 +76,6 @@ app.include_router(health_router, prefix=settings.api_v1_prefix)
 app.include_router(search_router, prefix=settings.api_v1_prefix)
 app.include_router(extract_router, prefix=settings.api_v1_prefix)
 app.include_router(research_router, prefix=settings.api_v1_prefix)
-app.include_router(tavily_map_router, prefix=settings.api_v1_prefix)
-app.include_router(tavily_crawl_router, prefix=settings.api_v1_prefix)
-app.include_router(tavily_research_router, prefix=settings.api_v1_prefix)
+app.include_router(serper_map_router, prefix=settings.api_v1_prefix)
+app.include_router(serper_crawl_router, prefix=settings.api_v1_prefix)
+app.include_router(serper_research_router, prefix=settings.api_v1_prefix)

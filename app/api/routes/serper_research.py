@@ -1,4 +1,4 @@
-"""Tavily Research (task-based) API endpoint."""
+"""Serper-backed Research (task-based) API endpoint."""
 import json
 from typing import Annotated
 
@@ -8,29 +8,13 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.services.tavily_service import TavilyService
+from app.services.serper_service import SerperService
 
-router = APIRouter(prefix="/research", tags=["tavily"])
-
-
-def _tavily_error_message(exc: httpx.HTTPStatusError) -> str:
-    """Build a readable upstream error message for Tavily failures."""
-    status = exc.response.status_code if exc.response else 502
-    body = ""
-    if exc.response is not None:
-        try:
-            parsed = exc.response.json()
-            body = json.dumps(parsed)[:500]
-        except Exception:
-            body = (exc.response.text or "")[:500]
-
-    if body:
-        return f"Tavily returned HTTP {status}: {body}"
-    return f"Tavily returned HTTP {status}."
+router = APIRouter(prefix="/research", tags=["serper"])
 
 
 class ResearchTaskRequest(BaseModel):
-    """Request schema for Tavily /research/tasks endpoint."""
+    """Request schema for /research/tasks endpoint."""
 
     query: str
     focus: str | None = None
@@ -56,9 +40,9 @@ async def submit_research_task(
     payload: ResearchTaskRequest,
     db: Annotated[Session, Depends(get_db)],
 ) -> ResearchTaskResponse:
-    """Submit a research task to Tavily."""
+    """Submit a research task backed by Serper search."""
     try:
-        service = TavilyService()
+        service = SerperService()
         result = await service.submit_research_task(
             query=payload.query,
             focus=payload.focus,
@@ -68,9 +52,17 @@ async def submit_research_task(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=502, detail=_tavily_error_message(exc)) from exc
+        status = exc.response.status_code if exc.response else 502
+        body = ""
+        if exc.response is not None:
+            try:
+                body = json.dumps(exc.response.json())[:500]
+            except Exception:
+                body = (exc.response.text or "")[:500]
+        detail = f"Serper returned HTTP {status}: {body}" if body else f"Serper returned HTTP {status}."
+        raise HTTPException(status_code=502, detail=detail) from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Tavily network error: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Serper network error: {exc}") from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Task submission failed: {exc}") from exc
 
@@ -84,25 +76,22 @@ async def submit_research_task(
     },
 )
 async def get_research_task(
-    task_id: Annotated[str, Path(description="Task ID from Tavily")],
+    task_id: Annotated[str, Path(description="Task ID returned by POST /research/tasks")],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    """Get research task status and results from Tavily."""
+    """Get research task status and results."""
     try:
-        service = TavilyService()
+        service = SerperService()
         result = await service.get_research_task(task_id=task_id)
         return result
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found.") from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
         status = exc.response.status_code if exc.response else 502
-        if status == 404:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Task {task_id} not found.",
-            ) from exc
-        raise HTTPException(status_code=502, detail=_tavily_error_message(exc)) from exc
+        raise HTTPException(status_code=502, detail=f"Serper returned HTTP {status}.") from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Tavily network error: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Serper network error: {exc}") from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Task retrieval failed: {exc}") from exc

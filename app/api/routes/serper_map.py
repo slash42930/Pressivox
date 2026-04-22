@@ -1,4 +1,4 @@
-"""Tavily Map API endpoint."""
+"""Serper-backed Map API endpoint."""
 from typing import Annotated
 
 import httpx
@@ -7,13 +7,13 @@ from pydantic import BaseModel, HttpUrl
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.services.tavily_service import TavilyService
+from app.services.serper_service import SerperService
 
-router = APIRouter(prefix="/map", tags=["tavily"])
+router = APIRouter(prefix="/map", tags=["serper"])
 
 
 class MapRequest(BaseModel):
-    """Request schema for Tavily /map endpoint."""
+    """Request schema for /map endpoint."""
 
     url: HttpUrl
     max_depth: int = 1
@@ -32,9 +32,9 @@ async def get_map(
     payload: MapRequest,
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    """Retrieve map data from Tavily."""
+    """Crawl a website and return discovered URLs."""
     try:
-        service = TavilyService()
+        service = SerperService()
         result = await service.map(
             url=str(payload.url),
             max_depth=payload.max_depth,
@@ -46,8 +46,8 @@ async def get_map(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
         status = exc.response.status_code if exc.response else 502
-        raise HTTPException(status_code=502, detail=f"Tavily returned HTTP {status}.") from exc
+        raise HTTPException(status_code=502, detail=f"Serper returned HTTP {status}.") from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Tavily network error: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Serper network error: {exc}") from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Map retrieval failed: {exc}") from exc

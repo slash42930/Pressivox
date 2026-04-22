@@ -388,26 +388,19 @@ class ExtractionService:
 
         return final_passages
 
-    async def _extract_with_tavily(self, url: str, query: str | None = None) -> dict | None:
-        if not self.settings.tavily_api_key or self.settings.tavily_api_key == "replace_me":
+    async def _extract_with_serper(self, url: str, query: str | None = None) -> dict | None:
+        if not self.settings.serper_api_key or self.settings.serper_api_key == "replace_me":
             return None
 
-        endpoint = f"{self.settings.tavily_base_url}/extract"
+        endpoint = self.settings.serper_scrape_url
         headers = {
-            "Authorization": f"Bearer {self.settings.tavily_api_key}",
+            "X-API-KEY": self.settings.serper_api_key,
             "Content-Type": "application/json",
         }
-
         payload = {
-            "urls": [url],
-            "extract_depth": "basic",
-            "include_images": False,
-            "format": "markdown",
+            "url": url,
+            "includeMarkdown": False,
         }
-
-        if query:
-            payload["query"] = query
-            payload["chunks_per_source"] = 3
 
         async with httpx.AsyncClient(
             timeout=self.settings.http_timeout_seconds,
@@ -417,19 +410,15 @@ class ExtractionService:
             response.raise_for_status()
             data = response.json()
 
-        results = data.get("results") or []
-        if not results:
-            return None
-
-        item = results[0]
-        raw_text = item.get("raw_content") or item.get("content") or ""
+        # Serper scrape returns { text, title, url, ... }
+        raw_text = data.get("text") or data.get("content") or ""
         cleaned_text = self._clean_lines(raw_text)
 
         if not cleaned_text.strip():
             return None
 
-        final_url = item.get("url") or url
-        title = item.get("title") or "Untitled"
+        final_url = data.get("url") or url
+        title = data.get("title") or "Untitled"
 
         return {
             "url": url,
@@ -483,18 +472,20 @@ class ExtractionService:
         }
 
     async def extract_from_url(self, url: str, query: str | None = None) -> dict:
-        tavily_result = None
+        serper_result = None
 
         try:
-            tavily_result = await self._extract_with_tavily(url, query=query)
+            serper_result = await self._extract_with_serper(url, query=query)
         except Exception:
-            tavily_result = None
+            serper_result = None
 
-        result = tavily_result or await self._extract_with_readability(url, query=query)
+        result = serper_result or await self._extract_with_readability(url, query=query)
         self._save_document(result)
         return result
 
     def _save_document(self, data: dict) -> None:
+        if self.db is None:
+            return
         row = ExtractedDocument(
             url=data["url"],
             final_url=data.get("final_url"),

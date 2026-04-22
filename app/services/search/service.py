@@ -3,7 +3,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.search import SearchHistory
-from app.providers.tavily_provider import TavilySearchProvider
+from app.providers.serper_provider import SerperSearchProvider
 from app.schemas.search import SearchRequest
 from app.services.extraction_service import ExtractionService
 from app.services.summarization_service import (
@@ -30,7 +30,7 @@ class SearchService:
 
     def __init__(self, db: Session) -> None:
         self.db = db
-        self.provider = TavilySearchProvider()
+        self.provider = SerperSearchProvider()
         self.extraction_service = ExtractionService(db)
 
     def _is_short_general_query(self, request: SearchRequest) -> bool:

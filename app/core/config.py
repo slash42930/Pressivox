@@ -17,9 +17,10 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./web_search.db"
 
-    tavily_api_key: str = "replace_me"
-    tavily_base_url: str = "https://api.tavily.com"
-    default_search_provider: str = "tavily"
+    serper_api_key: str = "replace_me"
+    serper_base_url: str = "https://google.serper.dev"
+    serper_scrape_url: str = "https://scrape.serper.dev"
+    default_search_provider: str = "serper"
     default_max_results: int = 10
     http_timeout_seconds: int = 20
     cors_allow_origins: str = "*"
