@@ -1,4 +1,6 @@
 """Service layer for Tavily API operations."""
+from datetime import datetime, timezone
+
 import httpx
 
 from app.core.config import get_settings
@@ -19,6 +21,36 @@ class TavilyService:
         return {
             "Authorization": f"Bearer {self.settings.tavily_api_key}",
             "Content-Type": "application/json",
+        }
+
+    def _normalize_task_submission(self, data: dict) -> dict:
+        """Normalize Tavily response to the UI contract.
+
+        Tavily deployments can return different keys for task submission.
+        This method keeps our API stable for the frontend.
+        """
+        task_id = (
+            data.get("task_id")
+            or data.get("id")
+            or data.get("research_id")
+            or data.get("job_id")
+            or ""
+        )
+        if not task_id:
+            raise ValueError("Tavily response did not include a task identifier.")
+
+        status = str(data.get("status") or data.get("state") or "queued")
+        created_at = (
+            data.get("created_at")
+            or data.get("created")
+            or data.get("submitted_at")
+            or datetime.now(timezone.utc).isoformat()
+        )
+
+        return {
+            "task_id": task_id,
+            "status": status,
+            "created_at": str(created_at),
         }
 
     async def map(
@@ -101,7 +133,8 @@ class TavilyService:
         if not self.settings.tavily_api_key:
             raise ValueError(_MISSING_API_KEY_ERROR)
 
-        url = f"{self.settings.tavily_base_url}/research/tasks"
+        primary_url = f"{self.settings.tavily_base_url}/research"
+        fallback_url = f"{self.settings.tavily_base_url}/research/tasks"
         headers = self._get_headers()
 
         payload = {
@@ -116,11 +149,16 @@ class TavilyService:
             timeout=self.settings.http_timeout_seconds,
             trust_env=False,
         ) as client:
-            response = await client.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
+            # Tavily currently accepts task submission on POST /research.
+            # Keep fallback for environments that still expose POST /research/tasks.
+            response = await client.post(primary_url, headers=headers, json=payload)
+            if response.status_code in {404, 405}:
+                response = await client.post(fallback_url, headers=headers, json=payload)
 
-        return data
+            response.raise_for_status()
+            data = response.json() if response.content else {}
+
+        return self._normalize_task_submission(data)
 
     async def get_research_task(self, task_id: str) -> dict:
         """Get research task status and results from Tavily.
