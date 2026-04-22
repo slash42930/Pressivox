@@ -852,7 +852,7 @@
 
     const PERSISTED_FIELD_IDS = [
       "searchQuery", "searchTopic", "searchLanguage", "searchMaxResults", "searchIncludeDomains", "searchExcludeDomains",
-      "searchMaxAgeDays", "searchStartDate", "searchEndDate", "searchSort",
+      "searchMaxAgeDays", "searchStartDate", "searchEndDate",
       "researchQuery", "researchTopic", "researchLanguage", "researchMaxResults", "researchIncludeDomains", "researchExcludeDomains",
       "researchTimeRange", "researchMaxAgeDays", "researchStartDate", "researchEndDate",
       "extractUrl"
@@ -1972,7 +1972,8 @@
       state.searchResponse = data;
       state.searchResults = Array.isArray(data.results) ? data.results : [];
       state.searchCompare = state.searchCompare.filter(entry => state.searchResults.some(item => compareKey(item) === compareKey(entry)));
-      const sorted = sortResults(state.searchResults, els.searchSort?.value || "relevance");
+      if (els.searchSort) { els.searchSort.value = "relevance"; persistField("searchSort"); }
+      const sorted = sortResults(state.searchResults, "relevance");
       const responseTime = typeof data.response_time === "number" ? `${data.response_time.toFixed(2)}s` : "-";
 
       els.searchMeta.textContent = `${sorted.length} result(s)`;
