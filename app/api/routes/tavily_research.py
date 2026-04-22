@@ -1,4 +1,5 @@
 """Tavily Research (task-based) API endpoint."""
+import json
 from typing import Annotated
 
 import httpx
@@ -10,6 +11,22 @@ from app.core.database import get_db
 from app.services.tavily_service import TavilyService
 
 router = APIRouter(prefix="/research", tags=["tavily"])
+
+
+def _tavily_error_message(exc: httpx.HTTPStatusError) -> str:
+    """Build a readable upstream error message for Tavily failures."""
+    status = exc.response.status_code if exc.response else 502
+    body = ""
+    if exc.response is not None:
+        try:
+            parsed = exc.response.json()
+            body = json.dumps(parsed)[:500]
+        except Exception:
+            body = (exc.response.text or "")[:500]
+
+    if body:
+        return f"Tavily returned HTTP {status}: {body}"
+    return f"Tavily returned HTTP {status}."
 
 
 class ResearchTaskRequest(BaseModel):
@@ -51,8 +68,7 @@ async def submit_research_task(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
-        status = exc.response.status_code if exc.response else 502
-        raise HTTPException(status_code=502, detail=f"Tavily returned HTTP {status}.") from exc
+        raise HTTPException(status_code=502, detail=_tavily_error_message(exc)) from exc
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Tavily network error: {exc}") from exc
     except Exception as exc:
@@ -85,7 +101,7 @@ async def get_research_task(
                 status_code=404,
                 detail=f"Task {task_id} not found.",
             ) from exc
-        raise HTTPException(status_code=502, detail=f"Tavily returned HTTP {status}.") from exc
+        raise HTTPException(status_code=502, detail=_tavily_error_message(exc)) from exc
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Tavily network error: {exc}") from exc
     except Exception as exc:

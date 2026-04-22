@@ -138,27 +138,55 @@ class TavilyService:
         fallback_url = f"{self.settings.tavily_base_url}/research/tasks"
         headers = self._get_headers()
 
-        payload = {
-            "input": query,
-        }
+        normalized_query = query.strip()
+        if not normalized_query:
+            raise ValueError("Query is required.")
 
-        if focus:
-            payload["focus"] = focus
-        if max_sources and max_sources > 0:
-            payload["max_sources"] = max_sources
+        enriched_input = normalized_query
+        if focus and focus.strip():
+            enriched_input = f"{normalized_query}\nFocus areas: {focus.strip()}"
+
+        primary_payload = {
+            "input": enriched_input,
+            "stream": False,
+        }
+        legacy_payload = {
+            "query": normalized_query,
+            "max_sources": max_sources,
+        }
+        if focus and focus.strip():
+            legacy_payload["focus"] = focus.strip()
+
+        attempts = [
+            (primary_url, primary_payload),
+            (primary_url, legacy_payload),
+            (fallback_url, legacy_payload),
+            (fallback_url, primary_payload),
+        ]
 
         async with httpx.AsyncClient(
             timeout=self.settings.http_timeout_seconds,
             trust_env=False,
         ) as client:
-            # Tavily currently accepts task submission on POST /research.
-            # Keep fallback for environments that still expose POST /research/tasks.
-            response = await client.post(primary_url, headers=headers, json=payload)
-            if response.status_code in {404, 405}:
-                response = await client.post(fallback_url, headers=headers, json=payload)
+            last_response: httpx.Response | None = None
+            data: dict = {}
 
-            response.raise_for_status()
-            data = response.json() if response.content else {}
+            for url, payload in attempts:
+                response = await client.post(url, headers=headers, json=payload)
+                last_response = response
+                if response.is_success:
+                    data = response.json() if response.content else {}
+                    break
+
+                # Different Tavily API generations may reject one shape but accept another.
+                if response.status_code in {404, 405, 422}:
+                    continue
+
+                response.raise_for_status()
+
+            if not data:
+                assert last_response is not None
+                last_response.raise_for_status()
 
         return self._normalize_task_submission(data)
 
