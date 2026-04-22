@@ -11,3 +11,5 @@ def test_static_mod_ui_is_served() -> None:
 
     assert response.status_code == 200
     assert "text/html" in response.headers.get("content-type", "")
+    assert "Advanced Research" in response.text
+    assert "Copy Markdown" in response.text

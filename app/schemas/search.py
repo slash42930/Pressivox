@@ -43,25 +43,6 @@ class SearchResultItem(BaseModel):
     rerank_score: float | None = None
 
 
-class SearchResponse(BaseModel):
-    query: str
-    topic: str
-    provider: str
-
-    results: list[SearchResultItem]
-
-    summary: str | None = None
-    extracted_summary: str | None = None
-    extraction_attempted: bool = False
-    extracted_count: int = 0
-
-    answer: str | None = None
-    response_time: float | None = None
-    request_id: str | None = None
-    auto_parameters: dict[str, Any] | None = None
-    usage: dict[str, Any] | None = None
-
-
 class ResearchSelectedSourceItem(BaseModel):
     meaning: str | None = None
     title: str
@@ -79,6 +60,28 @@ class ResearchResultItem(BaseModel):
     rerank_score: float | None = None
     published_date: str | None = None
     favicon: HttpUrl | None = None
+
+
+class SearchResponse(BaseModel):
+    query: str
+    topic: str
+    provider: str
+
+    results: list[SearchResultItem]
+
+    summary: str | None = None
+    extracted_summary: str | None = None
+    extraction_attempted: bool = False
+    extracted_count: int = 0
+
+    answer: str | None = None
+    response_time: float | None = None
+    request_id: str | None = None
+    auto_parameters: dict[str, Any] | None = None
+    usage: dict[str, Any] | None = None
+    selected_sources: list[ResearchSelectedSourceItem] = Field(default_factory=list)
+    ambiguous: bool = False
+    meaning_groups: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ResearchResponse(BaseModel):
