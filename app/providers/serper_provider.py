@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import time
 import uuid
+import unicodedata
 from datetime import date as _date, timedelta as _timedelta
 from urllib.parse import urlparse
 
@@ -20,23 +21,26 @@ _MONTH_MAP = {
 def _normalize_serper_date(raw: str | None) -> str | None:
     """Convert Serper news date strings to ISO YYYY-MM-DD.
 
-    Serper /news returns two formats:
-    - Relative: "4 days ago", "2 hours ago", "1 month ago", "yesterday"
+    Serper /news returns relative and absolute formats in multiple locales.
+    - Relative EN: "4 days ago", "2 hours ago", "1 month ago", "yesterday"
+    - Relative RO: "acum 2 ore", "Acum o zi", "acum 20 de ore"
     - Absolute: "Feb 6, 2024", "Nov 12, 2018"
     Returns ISO string when parseable, original string otherwise.
     """
     if not raw:
         return None
     s = raw.strip().lower()
+    s_norm = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+    s_norm = re.sub(r"\s+", " ", s_norm).strip()
     today = _date.today()
 
-    if s == "yesterday":
+    if s_norm in ("yesterday", "ieri"):
         return (today - _timedelta(days=1)).isoformat()
-    if s == "today":
+    if s_norm in ("today", "azi"):
         return today.isoformat()
 
     # Relative: "N unit(s) ago"
-    m = re.match(r"(\d+)\s*(minute|hour|day|week|month|year)s?\s+ago", s)
+    m = re.match(r"(\d+)\s*(minute|hour|day|week|month|year)s?\s+ago", s_norm)
     if m:
         n, unit = int(m.group(1)), m.group(2)
         if unit in ("minute", "hour"):
@@ -50,8 +54,24 @@ def _normalize_serper_date(raw: str | None) -> str | None:
         if unit == "year":
             return (today - _timedelta(days=n * 365)).isoformat()
 
+    # Relative RO: "acum 2 ore", "acum o zi", "acum 20 de ore"
+    m = re.match(r"acum\s+(\d+|o|un|una)\s*(?:de\s+)?([a-z]+)", s_norm)
+    if m:
+        n_raw, unit = m.group(1), m.group(2)
+        n = 1 if n_raw in ("o", "un", "una") else int(n_raw)
+        if unit.startswith("minut") or unit.startswith("ora") or unit.startswith("ore"):
+            return today.isoformat()
+        if unit.startswith("zi"):
+            return (today - _timedelta(days=n)).isoformat()
+        if unit.startswith("saptaman"):
+            return (today - _timedelta(weeks=n)).isoformat()
+        if unit.startswith("luna") or unit.startswith("luni"):
+            return (today - _timedelta(days=n * 30)).isoformat()
+        if unit.startswith("an"):
+            return (today - _timedelta(days=n * 365)).isoformat()
+
     # Absolute: "Feb 6, 2024" or "Feb 06, 2024"
-    m = re.match(r"([a-z]{3})\s+(\d{1,2}),?\s+(\d{4})", s)
+    m = re.match(r"([a-z]{3})\s+(\d{1,2}),?\s+(\d{4})", s_norm)
     if m:
         month = _MONTH_MAP.get(m.group(1))
         if month:
