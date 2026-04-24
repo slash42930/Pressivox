@@ -3,13 +3,65 @@ from __future__ import annotations
 import re
 import time
 import uuid
-from datetime import date as _date
+from datetime import date as _date, timedelta as _timedelta
 from urllib.parse import urlparse
 
 import httpx
 
 from app.core.config import get_settings
 from app.providers.base import SearchProvider
+
+_MONTH_MAP = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def _normalize_serper_date(raw: str | None) -> str | None:
+    """Convert Serper news date strings to ISO YYYY-MM-DD.
+
+    Serper /news returns two formats:
+    - Relative: "4 days ago", "2 hours ago", "1 month ago", "yesterday"
+    - Absolute: "Feb 6, 2024", "Nov 12, 2018"
+    Returns ISO string when parseable, original string otherwise.
+    """
+    if not raw:
+        return None
+    s = raw.strip().lower()
+    today = _date.today()
+
+    if s == "yesterday":
+        return (today - _timedelta(days=1)).isoformat()
+    if s == "today":
+        return today.isoformat()
+
+    # Relative: "N unit(s) ago"
+    m = re.match(r"(\d+)\s*(minute|hour|day|week|month|year)s?\s+ago", s)
+    if m:
+        n, unit = int(m.group(1)), m.group(2)
+        if unit in ("minute", "hour"):
+            return today.isoformat()
+        if unit == "day":
+            return (today - _timedelta(days=n)).isoformat()
+        if unit == "week":
+            return (today - _timedelta(weeks=n)).isoformat()
+        if unit == "month":
+            return (today - _timedelta(days=n * 30)).isoformat()
+        if unit == "year":
+            return (today - _timedelta(days=n * 365)).isoformat()
+
+    # Absolute: "Feb 6, 2024" or "Feb 06, 2024"
+    m = re.match(r"([a-z]{3})\s+(\d{1,2}),?\s+(\d{4})", s)
+    if m:
+        month = _MONTH_MAP.get(m.group(1))
+        if month:
+            try:
+                return _date(int(m.group(3)), month, int(m.group(2))).isoformat()
+            except ValueError:
+                pass
+
+    return raw  # unrecognised — return as-is
+
 
 _TBS_MAP = {
     "day": "qdr:d",
@@ -213,7 +265,7 @@ class SerperSearchProvider(SearchProvider):
                     "score": score,
                     "source": hostname,
                     "raw_content": None,
-                    "published_date": item.get("date"),
+                    "published_date": _normalize_serper_date(item.get("date")),
                     "favicon": favicon_url,
                     # news results carry an article thumbnail; organic results don't
                     "thumbnail": item.get("imageUrl"),
