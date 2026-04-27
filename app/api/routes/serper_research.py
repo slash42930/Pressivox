@@ -53,18 +53,19 @@ async def submit_research_task(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
         status = exc.response.status_code if exc.response else 502
-        body = ""
-        if exc.response is not None:
-            try:
-                body = json.dumps(exc.response.json())[:500]
-            except Exception:
-                body = (exc.response.text or "")[:500]
-        detail = f"Serper returned HTTP {status}: {body}" if body else f"Serper returned HTTP {status}."
+        if status == 401:
+            detail = "Invalid Serper API credentials."
+        elif status == 429:
+            detail = "Rate limit exceeded. Try again later."
+        elif status >= 500:
+            detail = "Serper service error. Try again later."
+        else:
+            detail = "Serper API error. Contact support with your request ID."
         raise HTTPException(status_code=502, detail=detail) from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Serper network error: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Serper network error. Try again later.") from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Task submission failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Task submission failed. Contact support.") from exc
 
 
 @router.get(

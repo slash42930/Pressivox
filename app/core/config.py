@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./web_search.db"
 
-    serper_api_key: str = "replace_me"
+    serper_api_key: str = ""
     serper_base_url: str = "https://google.serper.dev"
     serper_scrape_url: str = "https://scrape.serper.dev"
     default_search_provider: str = "serper"

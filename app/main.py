@@ -16,8 +16,20 @@ from app.core.config import get_settings
 from app.core.database import Base, engine
 from app.models.extracted_document import ExtractedDocument
 from app.models.search import SearchHistory
+from app.utils.validators import validate_serper_api_key
 
 settings = get_settings()
+
+# Validate Serper API key at startup (fail-fast pattern)
+try:
+    validate_serper_api_key(settings.serper_api_key, env=settings.app_env, raise_on_missing=True)
+except ValueError as e:
+    if settings.app_env == "production":
+        raise RuntimeError(f"Critical: {str(e)}") from e
+    # In development, just warn but allow startup
+    import logging
+    logging.warning(f"Warning: {str(e)}")
+
 Base.metadata.create_all(bind=engine)
 
 

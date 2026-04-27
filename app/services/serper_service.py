@@ -12,8 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.providers.serper_provider import SerperSearchProvider
-
-_MISSING_API_KEY_ERROR = "SERPER_API_KEY is missing. Set it in your .env file."
+from app.utils.validators import validate_serper_api_key
 
 # In-memory task store — keyed by task_id.
 # Tasks are lost on server restart; acceptable for dev/demo use.
@@ -43,8 +42,8 @@ class SerperService:
         reuses the project's own ExtractionService so no extra API credits
         are consumed.  The response shape mirrors the old Tavily /crawl output.
         """
-        if not self.settings.serper_api_key or self.settings.serper_api_key == "replace_me":
-            raise ValueError(_MISSING_API_KEY_ERROR)
+        from app.utils.validators import validate_serper_api_key
+        validate_serper_api_key(self.settings.serper_api_key, env=self.settings.app_env)
 
         # Import here to avoid circular imports (ExtractionService uses the db).
         from app.services.extraction_service import ExtractionService
@@ -106,8 +105,8 @@ class SerperService:
         collecting up to *max_results* unique URLs.  Implemented with
         httpx + BeautifulSoup — no Serper credits consumed.
         """
-        if not self.settings.serper_api_key or self.settings.serper_api_key == "replace_me":
-            raise ValueError(_MISSING_API_KEY_ERROR)
+        from app.utils.validators import validate_serper_api_key
+        validate_serper_api_key(self.settings.serper_api_key, env=self.settings.app_env)
 
         parsed_base = urlparse(url)
         base_host = parsed_base.hostname or ""
@@ -207,8 +206,7 @@ class SerperService:
         results.  This simulates an async task API so that the frontend polling
         pattern continues to work without modification.
         """
-        if not self.settings.serper_api_key or self.settings.serper_api_key == "replace_me":
-            raise ValueError(_MISSING_API_KEY_ERROR)
+        validate_serper_api_key(self.settings.serper_api_key, env=self.settings.app_env)
 
         normalized_query = query.strip()
         if not normalized_query:
@@ -268,8 +266,7 @@ class SerperService:
 
     def get_research_task(self, task_id: str) -> dict:
         """Retrieve research task results by task ID."""
-        if not self.settings.serper_api_key or self.settings.serper_api_key == "replace_me":
-            raise ValueError(_MISSING_API_KEY_ERROR)
+        validate_serper_api_key(self.settings.serper_api_key, env=self.settings.app_env)
 
         task = _TASK_STORE.get(task_id)
         if task is None:

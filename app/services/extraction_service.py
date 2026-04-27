@@ -389,7 +389,9 @@ class ExtractionService:
         return final_passages
 
     async def _extract_with_serper(self, url: str, query: str | None = None) -> dict | None:
-        if not self.settings.serper_api_key or self.settings.serper_api_key == "replace_me":
+        from app.utils.validators import validate_serper_api_key
+        
+        if not validate_serper_api_key(self.settings.serper_api_key, raise_on_missing=False):
             return None
 
         endpoint = self.settings.serper_scrape_url

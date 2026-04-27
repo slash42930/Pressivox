@@ -208,8 +208,8 @@ class SerperSearchProvider(SearchProvider):
         time_range = kwargs.get("time_range")
         language = kwargs.get("language", "english")
 
-        if not self.settings.serper_api_key or self.settings.serper_api_key == "replace_me":
-            raise ValueError("SERPER_API_KEY is missing. Set it in your .env file.")
+        from app.utils.validators import validate_serper_api_key
+        validate_serper_api_key(self.settings.serper_api_key, env=self.settings.app_env)
 
         built_query = self._build_query(query, include_domains, exclude_domains, exact_match)
 
