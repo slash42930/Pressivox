@@ -3,7 +3,6 @@
 import re
 
 from .sentence_analysis import (
-    first_sentence,
     is_disambiguation_like,
     pick_best_sentences,
     truncate_at_sentence,

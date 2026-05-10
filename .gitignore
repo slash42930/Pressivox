@@ -1,10 +1,13 @@
-# Python caches
+# Python cache and tooling
 __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # Virtual environments
 .venv/
@@ -16,14 +19,35 @@ env/
 .env.*
 !.env.example
 
-# Local database and runtime artifacts
-*.db
-*.sqlite3
-
 # Build and packaging artifacts
 build/
 dist/
+frontend/dist/
 *.egg-info/
+
+# Frontend dependencies/cache
+node_modules/
+frontend/node_modules/
+.next/
+.cache/
+
+# Local database and artifacts
+*.db
+*.sqlite
+*.sqlite3
+web_search.db
+app/static/media_assets/
+app/models_opensource/
+
+# Media/model binaries
+*.mp4
+*.wav
+*.pth
+*.pt
+*.onnx
+*.safetensors
+*.ckpt
+*.bin
 
 # IDE/editor
 .vscode/
@@ -37,3 +61,6 @@ Thumbs.db
 *analysis_report*.json
 *route_e2e_report*.json
 random_word_analysis_report.json
+
+# Local AI skill sources
+.ai-skill-sources/

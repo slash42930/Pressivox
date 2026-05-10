@@ -11,3 +11,13 @@ __pycache__
 !.env.example
 web_search.db
 *.db
+*.sqlite
+*.sqlite3
+frontend/node_modules
+frontend/dist
+node_modules
+dist
+build
+.ai-skill-sources
+app/static/media_assets
+app/models_opensource
