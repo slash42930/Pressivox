@@ -74,11 +74,18 @@ function AuthGate({
   const content = (
     <Card className="w-full max-w-md rounded-3xl p-6 space-y-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="flex items-center gap-3">
+          <img
+            src="/pressivox_logo.png"
+            alt="Pressivox"
+            className="w-10 h-10 rounded-xl object-cover border border-white/[0.12]"
+          />
+          <div>
           <h1 className="font-display text-2xl font-bold text-slate-100">Pressivox Access</h1>
           <p className="text-sm text-slate-400 mt-1">
             {mode === 'login' ? 'Sign in to continue.' : 'Create an account to start searching.'}
           </p>
+          </div>
         </div>
         {onClose && (
           <button

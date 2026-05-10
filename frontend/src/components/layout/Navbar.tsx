@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, FlaskConical, FileText, LayoutDashboard, Clock, Info, Menu, X, Zap } from 'lucide-react'
+import { Search, FlaskConical, FileText, LayoutDashboard, Clock, Info, Menu, X } from 'lucide-react'
 import { cn } from '../../lib/utils'
-import { GradientText } from '../effects/TypewriterText'
 import type { TabName } from '../../types'
 
 const NAV_ITEMS: { id: TabName; label: string; icon: React.ElementType; accent: string; activeBg: string }[] = [
@@ -72,13 +71,13 @@ export function Navbar({ activeTab, onTabChange, searchRuns, researchRuns, extra
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             {/* Logo */}
             <div className="flex items-center gap-3 shrink-0">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-600 flex items-center justify-center shadow-glow-sm">
-                <Zap className="w-4 h-4 text-white" />
-              </div>
+              <img
+                src="/pressivox_logo.png"
+                alt="Pressivox"
+                className="w-9 h-9 rounded-xl object-cover border border-white/[0.12]"
+              />
               <div className="hidden sm:block">
-                <span className="font-display font-semibold text-slate-100">
-                  Web<GradientText> Search</GradientText>
-                </span>
+                <span className="font-display font-semibold text-slate-100">Pressivox</span>
               </div>
             </div>
 
