@@ -1,0 +1,17 @@
+.git/
+.github/
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+.env
+.env.*
+web_search.db
+tests/
+.ai-skill-sources/
+app/models_opensource/
+frontend/node_modules/
+frontend/dist/
