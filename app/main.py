@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request, Response
+from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -136,6 +138,7 @@ cors_origins = settings.cors_origins_list
 allow_credentials = "*" not in cors_origins
 
 BASE_DIR = Path(__file__).resolve().parent
+SPA_DIR = BASE_DIR / "static" / "spa"
 
 limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
@@ -184,3 +187,27 @@ app.include_router(research_router, prefix=settings.api_v1_prefix)
 app.include_router(tavily_map_router, prefix=settings.api_v1_prefix, dependencies=[Depends(require_roles("admin"))])
 app.include_router(tavily_crawl_router, prefix=settings.api_v1_prefix, dependencies=[Depends(require_roles("admin"))])
 app.include_router(tavily_research_router, prefix=settings.api_v1_prefix, dependencies=[Depends(require_roles("admin"))])
+
+
+@app.get("/", include_in_schema=False)
+async def serve_spa_root() -> FileResponse:
+    index_path = SPA_DIR / "index.html"
+    if index_path.is_file():
+        return FileResponse(index_path)
+    raise HTTPException(status_code=404, detail="Not Found")
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_spa_fallback(full_path: str) -> FileResponse:
+    if full_path.startswith("api/") or full_path.startswith("static/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    candidate = SPA_DIR / full_path
+    if candidate.is_file():
+        return FileResponse(candidate)
+
+    index_path = SPA_DIR / "index.html"
+    if index_path.is_file():
+        return FileResponse(index_path)
+
+    raise HTTPException(status_code=404, detail="Not Found")

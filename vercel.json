@@ -1,14 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm ci && npm run build",
-  "outputDirectory": "frontend/dist",
+  "buildCommand": "cd frontend && npm ci && npm run build && cd .. && rm -rf app/static/spa && mkdir -p app/static/spa && cp -R frontend/dist/. app/static/spa/",
   "routes": [
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/api/index.py"
     }
   ]
 }
