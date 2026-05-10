@@ -1,3 +1,4 @@
+import os
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
@@ -5,9 +6,23 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import get_settings
 
+
+def _resolve_database_url(raw_url: str) -> str:
+    """Normalize database URLs for serverless environments."""
+    if raw_url.startswith("postgres://"):
+        # SQLAlchemy expects the postgresql scheme.
+        return "postgresql+psycopg2://" + raw_url[len("postgres://") :]
+
+    if os.getenv("VERCEL") and raw_url.startswith("sqlite:///./"):
+        # Vercel serverless file system is read-only except /tmp.
+        return "sqlite:////tmp/web_search.db"
+
+    return raw_url
+
 settings = get_settings()
-connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
-engine = create_engine(settings.database_url, connect_args=connect_args)
+database_url = _resolve_database_url(settings.database_url)
+connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+engine = create_engine(database_url, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

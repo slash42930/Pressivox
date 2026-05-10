@@ -10,3 +10,4 @@ readability-lxml
 pytest
 python-jose[cryptography]
 slowapi
+psycopg2-binary
