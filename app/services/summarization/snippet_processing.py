@@ -67,6 +67,7 @@ def clean_summary_snippet(text: str, max_chars: int = 400, title: str | None = N
     if not cleaned or is_disambiguation_like(cleaned):
         return ""
 
+    entity = strip_parenthetical_suffix(title or "")
     best = pick_best_sentences(cleaned, entity=entity, max_sentences=1, max_chars=max_chars)
 
     if not best:

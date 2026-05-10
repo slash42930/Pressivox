@@ -17,6 +17,7 @@ def test_tavily_provider_drops_malformed_result_urls(monkeypatch: pytest.MonkeyP
             return False
 
         async def post(self, url: str, headers: dict, json: dict) -> httpx.Response:
+            await asyncio.sleep(0)
             request = httpx.Request('POST', url)
             return httpx.Response(
                 200,

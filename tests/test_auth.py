@@ -4,12 +4,13 @@ from app.main import app
 
 
 client = TestClient(app)
+TEST_AUTH_PASSWORD = "test-pass-123"
 
 
 def _register_payload(username: str) -> dict[str, str]:
     return {
         "username": username,
-        "password": "test-pass-123",
+        "password": TEST_AUTH_PASSWORD,
     }
 
 
