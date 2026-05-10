@@ -70,14 +70,18 @@ export function Navbar({ activeTab, onTabChange, searchRuns, researchRuns, extra
         <div className="glass border-b border-white/[0.06] px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             {/* Logo */}
-            <div className="flex items-center gap-3 shrink-0">
-              <img
-                src="/pressivox_logo.png"
-                alt="Pressivox"
-                className="w-9 h-9 rounded-xl object-cover border border-white/[0.12]"
-              />
+            <div className="flex items-center gap-2.5 shrink-0">
+              <div className="relative p-[2px] rounded-full bg-gradient-to-br from-cyan-500 via-fuchsia-500 to-cyan-400 shadow-lg shadow-cyan-900/40">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-950 flex items-center justify-center">
+                  <img
+                    src="/pressivox_logo.png"
+                    alt="Pressivox"
+                    className="w-full h-full object-contain p-0.5"
+                  />
+                </div>
+              </div>
               <div className="hidden sm:block">
-                <span className="font-display font-semibold text-slate-100">Pressivox</span>
+                <span className="font-display font-semibold tracking-wide text-slate-100">Pressivox</span>
               </div>
             </div>
 

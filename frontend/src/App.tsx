@@ -75,11 +75,15 @@ function AuthGate({
     <Card className="w-full max-w-md rounded-3xl p-6 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <img
-            src="/pressivox_logo.png"
-            alt="Pressivox"
-            className="w-10 h-10 rounded-xl object-cover border border-white/[0.12]"
-          />
+          <div className="relative p-[2px] rounded-full bg-gradient-to-br from-cyan-500 via-fuchsia-500 to-cyan-400 shadow-lg shadow-cyan-900/40">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-950 flex items-center justify-center">
+              <img
+                src="/pressivox_logo.png"
+                alt="Pressivox"
+                className="w-full h-full object-contain p-0.5"
+              />
+            </div>
+          </div>
           <div>
           <h1 className="font-display text-2xl font-bold text-slate-100">Pressivox Access</h1>
           <p className="text-sm text-slate-400 mt-1">
