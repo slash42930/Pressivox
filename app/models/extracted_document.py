@@ -10,6 +10,7 @@ class ExtractedDocument(Base):
     __tablename__ = "extracted_documents"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
     url: Mapped[str] = mapped_column(String(2000), index=True)
     final_url: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     title: Mapped[str] = mapped_column(String(1000))

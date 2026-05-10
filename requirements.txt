@@ -8,3 +8,5 @@ alembic
 beautifulsoup4
 readability-lxml
 pytest
+python-jose[cryptography]
+slowapi

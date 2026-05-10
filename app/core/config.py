@@ -24,10 +24,28 @@ class Settings(BaseSettings):
     http_timeout_seconds: int = 20
     cors_allow_origins: str = "*"
 
+    auth_secret_key: str = "change-this-secret-key"
+    auth_algorithm: str = "HS256"
+    auth_access_token_expire_minutes: int = 60
+    auth_refresh_token_expire_days: int = 7
+
     @property
     def cors_origins_list(self) -> list[str]:
         values = [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
         return values or ["*"]
+
+    def validate_security(self) -> None:
+        """Raise if insecure defaults are used in a non-development environment."""
+        insecure_keys = {"change-this-secret-key", "", "secret", "dev"}
+        if self.app_env != "development" and self.auth_secret_key in insecure_keys:
+            raise RuntimeError(
+                "AUTH_SECRET_KEY must be set to a secure random value in non-development environments. "
+                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+        if self.app_env == "production" and self.app_debug:
+            raise RuntimeError("APP_DEBUG must be false in production.")
+        if self.app_env == "production" and "*" in self.cors_origins_list:
+            raise RuntimeError("CORS_ALLOW_ORIGINS must be explicit in production and cannot include '*'.")
 
 
 @lru_cache

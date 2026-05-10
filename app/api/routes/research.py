@@ -4,7 +4,9 @@ import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_optional_current_user
 from app.core.database import get_db
+from app.models.user import User
 from app.schemas.search import ResearchResponse, SearchRequest
 from app.services.search import SearchService
 from app.services.search.result_filtering import is_good_result_for_extraction
@@ -23,6 +25,7 @@ router = APIRouter(prefix="/research", tags=["research"])
 async def run_research(
     payload: SearchRequest,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User | None, Depends(get_optional_current_user)],
     session_id: Annotated[str | None, Header(alias="X-Session-Id")] = None,
 ) -> ResearchResponse:
     """Aggregated internal research flow combining search and extraction.
@@ -32,7 +35,11 @@ async def run_research(
     """
     try:
         service = SearchService(db)
-        result = await service.run_search(payload, session_id=session_id)
+        result = await service.run_search(
+            payload,
+            session_id=session_id,
+            user_id=current_user.id if current_user else None,
+        )
 
         clean_results = [
             {
@@ -78,6 +85,6 @@ async def run_research(
         status = exc.response.status_code if exc.response else 502
         raise HTTPException(status_code=502, detail=f"Search provider returned HTTP {status}.") from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Search provider network error: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Search provider network error. Try again later.") from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Research flow failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Research flow failed. Try again later.") from exc

@@ -482,7 +482,12 @@ class ExtractionService:
             "content_length": len(cleaned_text),
         }
 
-    async def extract_from_url(self, url: str, query: str | None = None) -> dict:
+    async def extract_from_url(
+        self,
+        url: str,
+        query: str | None = None,
+        user_id: int | None = None,
+    ) -> dict:
         tavily_result = None
 
         try:
@@ -491,11 +496,12 @@ class ExtractionService:
             tavily_result = None
 
         result = tavily_result or await self._extract_with_readability(url, query=query)
-        self._save_document(result)
+        self._save_document(result, user_id=user_id)
         return result
 
-    def _save_document(self, data: dict) -> None:
+    def _save_document(self, data: dict, user_id: int | None = None) -> None:
         row = ExtractedDocument(
+            user_id=user_id,
             url=data["url"],
             final_url=data.get("final_url"),
             title=data["title"],
@@ -506,10 +512,9 @@ class ExtractionService:
         self.db.add(row)
         self.db.commit()
 
-    def list_history(self, limit: int = 20) -> list[ExtractedDocument]:
-        return (
-            self.db.query(ExtractedDocument)
-            .order_by(ExtractedDocument.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+    def list_history(self, limit: int = 20, user_id: int | None = None) -> list[ExtractedDocument]:
+        query = self.db.query(ExtractedDocument)
+        if user_id is not None:
+            query = query.filter(ExtractedDocument.user_id == user_id)
+
+        return query.order_by(ExtractedDocument.created_at.desc()).limit(limit).all()

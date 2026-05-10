@@ -9,8 +9,27 @@ from app.main import app
 client = TestClient(app)
 
 
+def _auth_headers() -> dict[str, str]:
+    credentials = {
+        "username": "test-user",
+        "password": "test-pass-123",
+    }
+
+    login = client.post("/api/v1/auth/login", json=credentials)
+    if login.status_code != 200:
+        client.post("/api/v1/auth/register", json=credentials)
+        login = client.post("/api/v1/auth/login", json=credentials)
+
+    assert login.status_code == 200
+    token = login.json()["access_token"]
+    return {
+        "Authorization": f"Bearer {token}",
+        "X-Session-Id": "test-session",
+    }
+
+
 def test_search_endpoint_returns_rich_ui_metadata(monkeypatch) -> None:
-    async def fake_run_search(self, request, session_id=None):
+    async def fake_run_search(self, request, session_id=None, user_id=None):
         await asyncio.sleep(0)
         return {
             "query": request.query,
@@ -70,7 +89,7 @@ def test_search_endpoint_returns_rich_ui_metadata(monkeypatch) -> None:
             "max_results": 5,
             "summarize": True,
         },
-        headers={"X-Session-Id": "test-session"},
+        headers=_auth_headers(),
     )
 
     assert response.status_code == 200
@@ -96,7 +115,11 @@ def test_search_analyze_endpoint_returns_guidance(monkeypatch) -> None:
 
     monkeypatch.setattr("app.api.routes.search.SearchService.analyze_query", fake_analyze_query)
 
-    response = client.get("/api/v1/search/analyze", params={"q": "Mercury", "topic": "general"})
+    response = client.get(
+        "/api/v1/search/analyze",
+        params={"q": "Mercury", "topic": "general"},
+        headers=_auth_headers(),
+    )
 
     assert response.status_code == 200
     body = response.json()
@@ -119,12 +142,12 @@ def test_search_history_includes_ux_metadata(monkeypatch) -> None:
         has_summary = True
         created_at = datetime.now(timezone.utc)
 
-    def fake_list_history(self, limit=20, session_id=None):
+    def fake_list_history(self, limit=20, session_id=None, user_id=None):
         return [Row()]
 
     monkeypatch.setattr("app.api.routes.search.SearchService.list_history", fake_list_history)
 
-    response = client.get("/api/v1/search/history", headers={"X-Session-Id": "session-1"})
+    response = client.get("/api/v1/search/history", headers=_auth_headers())
 
     assert response.status_code == 200
     body = response.json()

@@ -145,7 +145,12 @@ class SearchService:
             for item in primary
         ]
 
-    async def run_search(self, request: SearchRequest, session_id: str | None = None) -> dict:
+    async def run_search(
+        self,
+        request: SearchRequest,
+        session_id: str | None = None,
+        user_id: int | None = None,
+    ) -> dict:
         """Execute search and return results."""
         include_domains = request.include_domains or smart_select_domains(
             request.query,
@@ -256,9 +261,10 @@ class SearchService:
                     results,
                 )
 
-        if session_id:
+        if session_id or user_id:
             final_summary = extracted_summary or summary or primary_payload.get("answer")
             history_row = SearchHistory(
+            user_id=user_id,
                 session_id=session_id,
                 query=request.query,
                 topic=request.topic,
@@ -292,15 +298,20 @@ class SearchService:
             "meaning_groups": meaning_groups,
         }
 
-    def list_history(self, limit: int = 20, session_id: str | None = None) -> list[SearchHistory]:
+    def list_history(
+        self,
+        limit: int = 20,
+        session_id: str | None = None,
+        user_id: int | None = None,
+    ) -> list[SearchHistory]:
         """List search history."""
-        if not session_id:
+        if user_id is None and not session_id:
             return []
 
-        return (
-            self.db.query(SearchHistory)
-            .filter(SearchHistory.session_id == session_id)
-            .order_by(SearchHistory.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+        query = self.db.query(SearchHistory)
+        if user_id is not None:
+            query = query.filter(SearchHistory.user_id == user_id)
+        else:
+            query = query.filter(SearchHistory.session_id == session_id)
+
+        return query.order_by(SearchHistory.created_at.desc()).limit(limit).all()
