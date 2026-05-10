@@ -1,76 +1,35 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Copy, Download, AlertTriangle, BookOpen, Sparkles, SlidersHorizontal, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
+import { Copy, Download, AlertTriangle, BookOpen, Sparkles, SlidersHorizontal, Calendar, ChevronDown, ChevronUp, RefreshCw, Timer } from 'lucide-react'
 import { apiClient } from '../api/client'
 import { useToast } from '../components/Toast'
 import { ProgressBar } from '../components/ProgressBar'
-import type { SearchRequest, ResearchResponse, SearchResult } from '../types'
+import type { ResearchResponse, SearchResult } from '../types'
 import { ResearchCards } from '../components/ResearchCards'
 import { SelectedSources } from '../components/SelectedSources'
 import { MeaningGroups } from '../components/MeaningGroups'
 import { ComparePanel } from '../components/ComparePanel'
 import { EmptyState } from '../components/EmptyState'
 import { SkeletonResultCard, SkeletonSummary } from '../components/ui/Skeleton'
-import { parseDomains, toIsoDate, copyToClipboard, downloadTextFile } from '../utils'
+import { copyToClipboard, downloadTextFile } from '../utils'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Label } from '../components/ui/Label'
 import { SpotlightCard } from '../components/effects/AnimatedBackground'
+import { buildSearchPayload, type SearchPayloadFormValues } from '../utils/searchPayload'
+import { toggleCompareItems } from '../utils/compare'
+import { useAsyncAction } from '../hooks/useAsyncAction'
 
-interface ResearchForm {
-  query: string
-  topic: 'general' | 'news'
-  language: 'english' | 'romanian'
-  maxResults: number
-  includeDomains: string
-  excludeDomains: string
+interface ResearchForm extends SearchPayloadFormValues {
   timeRange: string
-  maxAgeDays: number
-  startDate: string
-  endDate: string
 }
 
 interface ResearchSectionProps {
   initialQuery?: string
   onResearchComplete: (response: ResearchResponse) => void
-}
-
-function buildPayload(form: ResearchForm): SearchRequest {
-  let start = form.startDate || null
-  let end = form.endDate || null
-
-  if (form.maxAgeDays > 0) {
-    const now = new Date()
-    const s = new Date(now)
-    s.setDate(s.getDate() - form.maxAgeDays)
-    start = toIsoDate(s)
-    end = toIsoDate(now)
-  }
-
-  const manualDomains = parseDomains(form.includeDomains)
-  return {
-    query: form.query,
-    topic: form.topic,
-    language: form.language,
-    max_results: form.maxResults,
-    summarize: true,
-    extract_top_results: true,
-    include_domains: manualDomains,
-    exclude_domains: parseDomains(form.excludeDomains),
-    search_depth: 'advanced',
-    time_range: start || end ? null : form.timeRange || null,
-    start_date: start,
-    end_date: end,
-    exact_match: false,
-    include_answer: true,
-    include_raw_content: true,
-    include_images: false,
-    include_image_descriptions: false,
-    include_favicon: true,
-    auto_parameters: true,
-  }
+  isAdmin?: boolean
 }
 
 function SummaryView({ summary, points }: { summary: string; points: string[] }) {
@@ -112,7 +71,100 @@ function SummaryView({ summary, points }: { summary: string; points: string[] })
   return <p className="text-slate-400 text-sm">No summary returned.</p>
 }
 
-export function ResearchSection({ initialQuery = 'artificial intelligence', onResearchComplete }: ResearchSectionProps) {
+export function StructuredResearchSections({ response }: { response: ResearchResponse }) {
+  const sections = response.sections
+  const conciseSummary = sections?.concise_summary || response.summary
+  const keyFindings = sections?.key_findings?.length ? sections.key_findings : response.summary_points
+  const detailedAnalysis = sections?.detailed_analysis || response.summary_markdown
+  const limitations = sections?.limitations || []
+  const followUps = sections?.suggested_follow_up_queries || []
+  const sourceCards = sections?.sources?.length ? sections.sources : response.results
+
+  return (
+    <div className="space-y-5">
+      <section aria-labelledby="research-concise-summary" className="space-y-2">
+        <h4 id="research-concise-summary" className="text-sm font-semibold uppercase tracking-wide text-fuchsia-300">
+          Concise Summary
+        </h4>
+        <p className="text-slate-200 leading-7">{conciseSummary || 'No concise summary available.'}</p>
+      </section>
+
+      <section aria-labelledby="research-key-findings" className="space-y-2">
+        <h4 id="research-key-findings" className="text-sm font-semibold uppercase tracking-wide text-fuchsia-300">
+          Key Findings
+        </h4>
+        <SummaryView summary={conciseSummary} points={keyFindings} />
+      </section>
+
+      <section aria-labelledby="research-detailed-analysis" className="space-y-2">
+        <h4 id="research-detailed-analysis" className="text-sm font-semibold uppercase tracking-wide text-fuchsia-300">
+          Detailed Analysis
+        </h4>
+        <pre className="whitespace-pre-wrap text-slate-200 leading-7 text-sm rounded-2xl bg-slate-950 border border-slate-800 p-4">
+          {detailedAnalysis || 'No detailed analysis available.'}
+        </pre>
+      </section>
+
+      {limitations.length > 0 && (
+        <section aria-labelledby="research-limitations" className="space-y-2">
+          <h4 id="research-limitations" className="text-sm font-semibold uppercase tracking-wide text-amber-300">
+            Limitations or Missing Information
+          </h4>
+          <ul className="space-y-2 text-slate-300 text-sm">
+            {limitations.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {followUps.length > 0 && (
+        <section aria-labelledby="research-follow-ups" className="space-y-2">
+          <h4 id="research-follow-ups" className="text-sm font-semibold uppercase tracking-wide text-cyan-300">
+            Suggested Follow-up Queries
+          </h4>
+          <ul className="flex flex-wrap gap-2">
+            {followUps.map((item, idx) => (
+              <li key={idx} className="rounded-full border border-cyan-700/40 bg-cyan-950/20 px-3 py-1 text-xs text-cyan-200">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section aria-labelledby="research-sources" className="space-y-2">
+        <h4 id="research-sources" className="text-sm font-semibold uppercase tracking-wide text-emerald-300">
+          Sources
+        </h4>
+        {sourceCards.length === 0 ? (
+          <p className="text-sm text-slate-400">No sources available.</p>
+        ) : (
+          <div className="space-y-2">
+            {sourceCards.slice(0, 8).map((item, idx) => (
+              <a
+                key={`${item.url}-${idx}`}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl border border-emerald-900/40 bg-emerald-950/10 p-3 hover:border-emerald-600/60 transition-colors"
+              >
+                <p className="text-sm font-semibold text-emerald-200 break-words">{item.title || 'Untitled source'}</p>
+                <p className="text-xs text-emerald-300/80 break-words">{item.source || 'unknown source'}</p>
+                {item.snippet && <p className="text-xs text-slate-300 mt-1 line-clamp-2">{item.snippet}</p>}
+              </a>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
+
+export function ResearchSection({ initialQuery = 'artificial intelligence', onResearchComplete, isAdmin = false }: ResearchSectionProps) {
   const { addToast } = useToast()
   const [showFilters, setShowFilters] = useState(false)
   const [form, setForm] = useState<ResearchForm>({
@@ -127,45 +179,58 @@ export function ResearchSection({ initialQuery = 'artificial intelligence', onRe
     startDate: '',
     endDate: '',
   })
-  const [loading, setLoading] = useState(false)
-  const [errorMsg, setErrorMsg] = useState('')
-  const [status, setStatus] = useState('')
+  const { loading, errorMsg, status, runAction } = useAsyncAction()
   const [response, setResponse] = useState<ResearchResponse | null>(null)
   const [compareItems, setCompareItems] = useState<SearchResult[]>([])
+  const [taskQuery, setTaskQuery] = useState(initialQuery)
+  const [taskFocus, setTaskFocus] = useState('')
+  const [taskMaxSources, setTaskMaxSources] = useState(20)
+  const [taskId, setTaskId] = useState('')
+  const [taskStatus, setTaskStatus] = useState<string>('')
+  const [taskResultCount, setTaskResultCount] = useState(0)
+  const [taskResultPreview, setTaskResultPreview] = useState<Array<{ title: string; url: string; source?: string }>>([])
+  const [taskError, setTaskError] = useState('')
+  const [taskBusy, setTaskBusy] = useState(false)
+  const [autoPoll, setAutoPoll] = useState(false)
+  const intervalRef = useRef<number | null>(null)
 
   const handleRunResearch = useCallback(async () => {
-    if (!form.query.trim()) return
-    setLoading(true)
-    setErrorMsg('')
-    setStatus('Running research…')
-    try {
-      const payload = buildPayload(form)
-      const data = await apiClient.research(payload)
-      setResponse(data)
-      setCompareItems(prev =>
-        prev.filter(c => data.results.some(r => r.url + r.title === c.url + c.title)),
-      )
-      onResearchComplete(data)
-      const msg = `Research complete — ${data.source_count} sources, ${data.summary_points.length} key points.`
-      setStatus(msg)
-      addToast(msg, 'success')
-    } catch (err) {
-      const msg = (err as Error).message
-      setErrorMsg(msg)
-      setStatus('')
-      addToast(msg, 'error')
-      setResponse(null)
-    } finally {
-      setLoading(false)
+    if (!form.query.trim()) {
+      addToast('Please enter a research query.', 'info')
+      return
     }
-  }, [form, onResearchComplete, addToast])
+    const payload = buildSearchPayload(form, { allowTimeRange: true })
+    await runAction(
+      () => apiClient.research(payload),
+      {
+        pendingStatus: 'Running research…',
+        successStatus: data => (
+          `Research complete — ${data.source_count} sources, ${data.summary_points.length} key points.`
+        ),
+        onSuccess: data => {
+          setResponse(data)
+          setCompareItems(prev =>
+            prev.filter(c => data.results.some(r => r.url + r.title === c.url + c.title)),
+          )
+          onResearchComplete(data)
+          addToast(
+            `Research complete — ${data.source_count} sources, ${data.summary_points.length} key points.`,
+            'success',
+          )
+        },
+        onError: (msg: string) => {
+          addToast(msg, 'error')
+          setResponse(null)
+        },
+      },
+    )
+  }, [form, onResearchComplete, addToast, runAction])
 
   const handleToggleCompare = useCallback((item: SearchResult) => {
-    const key = item.url + item.title
     setCompareItems(prev => {
-      if (prev.some(c => c.url + c.title === key)) return prev.filter(c => c.url + c.title !== key)
-      if (prev.length >= 3) { addToast('Compare panel is full (max 3).', 'info'); return prev }
-      return [...prev, item]
+      const update = toggleCompareItems(prev, item, 3)
+      if (update.maxReached) { addToast('Compare panel is full (max 3).', 'info') }
+      return update.next
     })
   }, [addToast])
 
@@ -185,6 +250,85 @@ export function ResearchSection({ initialQuery = 'artificial intelligence', onRe
     downloadTextFile('research-summary.md', response.summary_markdown)
     addToast('Markdown downloaded.', 'success')
   }, [response, addToast])
+
+  const handleSubmitTask = useCallback(async () => {
+    const query = taskQuery.trim()
+    if (!query) {
+      addToast('Task query is required.', 'info')
+      return
+    }
+
+    setTaskBusy(true)
+    setTaskError('')
+    try {
+      const created = await apiClient.submitResearchTask({
+        query,
+        focus: taskFocus.trim() || undefined,
+        max_sources: taskMaxSources,
+      })
+      setTaskId(created.task_id)
+      setTaskStatus(created.status)
+      setTaskResultCount(0)
+      setTaskResultPreview([])
+      addToast(`Task created: ${created.task_id}`, 'success')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to create task.'
+      setTaskError(msg)
+      addToast(msg, 'error')
+    } finally {
+      setTaskBusy(false)
+    }
+  }, [taskQuery, taskFocus, taskMaxSources, addToast])
+
+  const handlePollTask = useCallback(async () => {
+    const normalizedTaskId = taskId.trim()
+    if (!normalizedTaskId) {
+      addToast('Task ID is required to poll.', 'info')
+      return
+    }
+
+    setTaskBusy(true)
+    setTaskError('')
+    try {
+      const polled = await apiClient.getResearchTask(normalizedTaskId)
+      setTaskStatus(polled.status)
+      setTaskResultCount(polled.result_count)
+      setTaskResultPreview(polled.result_sources.slice(0, 5))
+      setTaskError(polled.error_message || '')
+
+      if (polled.is_terminal) {
+        setAutoPoll(false)
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to poll task.'
+      setTaskError(msg)
+      setAutoPoll(false)
+      addToast(msg, 'error')
+    } finally {
+      setTaskBusy(false)
+    }
+  }, [taskId, addToast])
+
+  useEffect(() => {
+    if (!autoPoll || !taskId.trim()) {
+      if (intervalRef.current !== null) {
+        window.clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      return
+    }
+
+    intervalRef.current = window.setInterval(() => {
+      void handlePollTask()
+    }, 3000)
+
+    return () => {
+      if (intervalRef.current !== null) {
+        window.clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [autoPoll, taskId, handlePollTask])
 
   return (
     <div className="space-y-4">
@@ -208,6 +352,7 @@ export function ResearchSection({ initialQuery = 'artificial intelligence', onRe
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 className="mb-4 rounded-xl bg-red-950/60 border border-red-800/60 px-4 py-3 flex items-start gap-3 text-sm text-red-200 overflow-hidden"
+                role="alert"
               >
                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
                 <span>{errorMsg}</span>
@@ -344,6 +489,7 @@ export function ResearchSection({ initialQuery = 'artificial intelligence', onRe
             <Button
               variant="fuchsia" size="lg" onClick={handleRunResearch} disabled={loading}
               className="rounded-2xl"
+              aria-label="Run research query"
             >
               <Sparkles className="w-4 h-4" />
               {loading ? 'Running…' : 'Run Research'}
@@ -358,12 +504,96 @@ export function ResearchSection({ initialQuery = 'artificial intelligence', onRe
             </Button>
           </div>
 
-          {status && <p className="text-sm text-slate-400 mt-3">{status}</p>}
+          {status && <p className="text-sm text-slate-400 mt-3" role="status" aria-live="polite">{status}</p>}
           <div className="mt-3">
             <ProgressBar active={loading} color="bg-fuchsia-500" />
           </div>
         </Card>
       </SpotlightCard>
+
+      {isAdmin && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 className="font-display font-semibold text-slate-100">Admin Tavily Task Polling</h3>
+              <p className="text-xs text-slate-500">Optional async task flow for /research/tasks endpoints.</p>
+            </div>
+            <Badge variant="amber">Admin</Badge>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+            <div className="md:col-span-2">
+              <Label className="mb-1.5 block text-xs">Task Query</Label>
+              <Input value={taskQuery} onChange={e => setTaskQuery(e.target.value)} />
+            </div>
+            <div>
+              <Label className="mb-1.5 block text-xs">Focus</Label>
+              <Input value={taskFocus} onChange={e => setTaskFocus(e.target.value)} placeholder="Optional focus" />
+            </div>
+            <div>
+              <Label className="mb-1.5 block text-xs">Max Sources</Label>
+              <Input type="number" min={1} max={50} value={taskMaxSources} onChange={e => setTaskMaxSources(Number(e.target.value || 20))} />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button variant="secondary" size="sm" onClick={handleSubmitTask} disabled={taskBusy}>
+              <Sparkles className="w-3.5 h-3.5" /> Submit Task
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handlePollTask} disabled={taskBusy || !taskId.trim()}>
+              <RefreshCw className="w-3.5 h-3.5" /> Poll Now
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAutoPoll(v => !v)}
+              disabled={!taskId.trim()}
+              aria-pressed={autoPoll}
+            >
+              <Timer className="w-3.5 h-3.5" /> {autoPoll ? 'Stop Auto Poll' : 'Start Auto Poll'}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <Label className="mb-1.5 block text-xs">Task ID</Label>
+              <Input value={taskId} onChange={e => setTaskId(e.target.value)} placeholder="Paste task id" />
+            </div>
+            <div className="rounded-xl bg-slate-950/60 border border-white/[0.05] px-3 py-2.5">
+              <p className="text-xs text-slate-500">Status</p>
+              <p className="text-sm text-slate-200 mt-1" role="status" aria-live="polite">{taskStatus || 'idle'}</p>
+            </div>
+            <div className="rounded-xl bg-slate-950/60 border border-white/[0.05] px-3 py-2.5">
+              <p className="text-xs text-slate-500">Result Count</p>
+              <p className="text-sm text-slate-200 mt-1">{taskResultCount}</p>
+            </div>
+          </div>
+
+          {taskError && (
+            <div className="mt-3 rounded-xl bg-red-950/60 border border-red-800/60 px-4 py-3 text-sm text-red-200" role="alert">
+              {taskError}
+            </div>
+          )}
+
+          {taskResultPreview.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Task Result Preview</p>
+              {taskResultPreview.map((item, index) => (
+                <a
+                  key={`${item.url}-${index}`}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 hover:border-fuchsia-600/60 transition-colors"
+                >
+                  <p className="text-sm text-fuchsia-300 break-words">{item.title}</p>
+                  <p className="text-xs text-slate-500 break-words">{item.source || item.url}</p>
+                </a>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* ── Summary + Overview ── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -390,7 +620,7 @@ export function ResearchSection({ initialQuery = 'artificial intelligence', onRe
             {loading ? (
               <SkeletonSummary />
             ) : response ? (
-              <SummaryView summary={response.summary} points={response.summary_points} />
+              <StructuredResearchSections response={response} />
             ) : (
               <p className="text-slate-500 text-sm italic">Run a research query to see a summary here.</p>
             )}

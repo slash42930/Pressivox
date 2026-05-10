@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_optional_current_user
+from app.api.error_utils import map_network_error, map_provider_data_error, map_provider_error
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.search import ResearchResponse, SearchRequest
 from app.services.search import SearchService
-from app.services.search.result_filtering import is_good_result_for_extraction
+from app.services.search.presentation import build_research_response_payload
 from app.services.summarization_service import format_research_summary
 
 router = APIRouter(prefix="/research", tags=["research"])
@@ -41,20 +42,6 @@ async def run_research(
             user_id=current_user.id if current_user else None,
         )
 
-        clean_results = [
-            {
-                "title": item["title"],
-                "url": item["url"],
-                "source": item.get("source"),
-                "score": item.get("score"),
-                "rerank_score": item.get("rerank_score"),
-                "published_date": item.get("published_date"),
-                "favicon": item.get("favicon"),
-            }
-            for item in result["results"]
-            if is_good_result_for_extraction(item)
-        ]
-
         summary_text = result["extracted_summary"] or result["summary"] or result.get("answer")
         formatted_summary = format_research_summary(
             summary_text,
@@ -62,29 +49,20 @@ async def run_research(
             meaning_groups=result.get("meaning_groups", []),
         )
 
-        return {
-            "query": result["query"],
-            "topic": result["topic"],
-            "provider": result["provider"],
-            "summary": formatted_summary["summary_clean"],
-            "summary_points": formatted_summary["summary_points"],
-            "summary_markdown": formatted_summary["summary_markdown"],
-            "results": clean_results,
-            "selected_sources": result.get("selected_sources", []),
-            "source_count": len(clean_results),
-            "extracted_count": result["extracted_count"],
-            "ambiguous": result.get("ambiguous", False),
-            "meaning_groups": result.get("meaning_groups", []),
-            "request_id": result.get("request_id"),
-            "response_time": result.get("response_time"),
-            "usage": result.get("usage"),
-        }
+        return build_research_response_payload(
+            result=result,
+            summary_clean=formatted_summary["summary_clean"],
+            summary_points=formatted_summary["summary_points"],
+            summary_markdown=formatted_summary["summary_markdown"],
+        )
     except ValueError as exc:
+        detail = str(exc)
+        if detail.lower().startswith("tavily returned"):
+            raise map_provider_data_error() from exc
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
-        status = exc.response.status_code if exc.response else 502
-        raise HTTPException(status_code=502, detail=f"Search provider returned HTTP {status}.") from exc
+        raise map_provider_error(exc) from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail="Search provider network error. Try again later.") from exc
+        raise map_network_error(exc) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail="Research flow failed. Try again later.") from exc

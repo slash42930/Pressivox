@@ -161,7 +161,13 @@ function AuthGate({
 function AuthModal({ onAuthenticated, onClose }: { onAuthenticated: (user: AuthUser) => void; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4" onClick={onClose}>
-      <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Authentication"
+      >
         <AuthGate
           onAuthenticated={(user) => {
             onAuthenticated(user)
@@ -302,7 +308,11 @@ export default function App() {
             )}
             {activeTab === 'research' && (
               <motion.div key="research" variants={tabVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.22 }}>
-                <ResearchSection initialQuery={researchInitialQuery} onResearchComplete={onResearchComplete} />
+                <ResearchSection
+                  initialQuery={researchInitialQuery}
+                  onResearchComplete={onResearchComplete}
+                  isAdmin={authUser?.role === 'admin'}
+                />
               </motion.div>
             )}
             {activeTab === 'extract' && (

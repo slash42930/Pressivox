@@ -97,10 +97,30 @@ export interface ResearchResponse {
   source_count: number
   extracted_count: number
   ambiguous: boolean
+  sections?: ResearchSections
   meaning_groups: MeaningGroup[]
   request_id?: string
   response_time?: number
   usage?: Record<string, unknown>
+}
+
+export interface ResearchSourceItem {
+  title: string
+  url: string
+  source?: string
+  snippet?: string
+  score?: number
+  published_date?: string
+}
+
+export interface ResearchSections {
+  concise_summary: string
+  key_findings: string[]
+  detailed_analysis: string
+  sources: ResearchSourceItem[]
+  limitations: string[]
+  suggested_follow_up_queries: string[]
+  confidence?: 'low' | 'medium' | 'high'
 }
 
 export interface ExtractResponse {
@@ -124,6 +144,26 @@ export interface QueryAnalysisResponse {
 
 export interface HealthResponse {
   status: string
+}
+
+export interface ResearchTaskResponse {
+  task_id: string
+  status: string
+  created_at: string
+}
+
+export interface ResearchTaskStatusResponse {
+  task_id: string
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'unknown'
+  is_terminal: boolean
+  result_count: number
+  result_sources: Array<{
+    title: string
+    url: string
+    source?: string
+    snippet?: string
+  }>
+  error_message?: string | null
 }
 
 export interface AuthUser {

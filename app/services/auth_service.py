@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.security import (
@@ -16,7 +17,8 @@ class AuthService:
         self.db = db
 
     def get_by_username(self, username: str) -> User | None:
-        return self.db.query(User).filter(User.username == username).first()
+        normalized = username.strip().lower()
+        return self.db.query(User).filter(func.lower(User.username) == normalized).first()
 
     def get_by_id(self, user_id: int) -> User | None:
         return self.db.query(User).filter(User.id == user_id).first()

@@ -2,6 +2,7 @@
 
 import re
 
+from .grouping import top_meaning_groups
 from .snippet_processing import build_doc_summary_piece, clean_summary_snippet
 from .text_cleaning import clean_text, strip_source_suffix
 
@@ -148,18 +149,7 @@ def summarize_ambiguity_groups(query: str, meaning_groups: list[dict]) -> str:
     if not meaning_groups:
         return f"No useful results found for '{query}'."
 
-    sorted_groups = sorted(
-        meaning_groups,
-        key=lambda g: float(g.get("top_score") or 0),
-        reverse=True,
-    )
-
-    non_other_groups = [
-        g for g in sorted_groups
-        if clean_text(g.get("meaning", "")).strip().lower() not in {"other", ""}
-    ]
-
-    groups_to_use = non_other_groups[:5] if len(non_other_groups) >= 2 else sorted_groups[:5]
+    groups_to_use = top_meaning_groups(meaning_groups, limit=5, min_non_other_for_prefer=2)
 
     lines = []
 
@@ -248,18 +238,7 @@ def summarize_extracted_documents(
             for doc in documents
         }
 
-        sorted_groups = sorted(
-            meaning_groups,
-            key=lambda g: float(g.get("top_score") or 0),
-            reverse=True,
-        )
-
-        non_other_groups = [
-            g for g in sorted_groups
-            if clean_text(g.get("meaning", "")).strip().lower() not in {"other", ""}
-        ]
-
-        groups_to_use = non_other_groups[:5] if len(non_other_groups) >= 2 else sorted_groups[:5]
+        groups_to_use = top_meaning_groups(meaning_groups, limit=5, min_non_other_for_prefer=2)
 
         blocks = []
 
@@ -332,17 +311,7 @@ def _points_from_meaning_groups(meaning_groups: list[dict] | None) -> list[str]:
     if not meaning_groups:
         return []
 
-    sorted_groups = sorted(
-        meaning_groups,
-        key=lambda g: float(g.get("top_score") or 0),
-        reverse=True,
-    )
-
-    non_other_groups = [
-        g for g in sorted_groups
-        if clean_text(g.get("meaning", "")).strip().lower() not in {"other", ""}
-    ]
-    groups_to_use = non_other_groups[:5] if len(non_other_groups) >= 2 else sorted_groups[:5]
+    groups_to_use = top_meaning_groups(meaning_groups, limit=5, min_non_other_for_prefer=2)
 
     points: list[str] = []
     seen: set[str] = set()

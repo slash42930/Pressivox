@@ -65,11 +65,31 @@ class ResearchSelectedSourceItem(BaseModel):
 class ResearchResultItem(BaseModel):
     title: str
     url: HttpUrl
+    snippet: str | None = None
     source: str | None = None
     score: float | None = None
     rerank_score: float | None = None
     published_date: str | None = None
     favicon: HttpUrl | None = None
+
+
+class ResearchSourceItem(BaseModel):
+    title: str
+    url: HttpUrl
+    source: str | None = None
+    snippet: str | None = None
+    score: float | None = None
+    published_date: str | None = None
+
+
+class ResearchSections(BaseModel):
+    concise_summary: str
+    key_findings: list[str] = Field(default_factory=list)
+    detailed_analysis: str = ""
+    sources: list[ResearchSourceItem] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    suggested_follow_up_queries: list[str] = Field(default_factory=list)
+    confidence: Literal["low", "medium", "high"] | None = None
 
 
 class SearchResponse(BaseModel):
@@ -108,6 +128,7 @@ class ResearchResponse(BaseModel):
     source_count: int = 0
     extracted_count: int = 0
     ambiguous: bool = False
+    sections: ResearchSections | None = None
 
     meaning_groups: list[dict[str, Any]] = Field(default_factory=list)
     request_id: str | None = None

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 import re
-from urllib.parse import urlparse
+from urllib.parse import ParseResult, urlparse, urlunparse
 
 import httpx
 
@@ -29,6 +29,34 @@ class TavilySearchProvider(SearchProvider):
         value = re.sub(r"\s+", " ", value).strip()
 
         return value if len(value) >= 20 else None
+
+    @staticmethod
+    def _sanitize_http_url(value: str | None) -> str | None:
+        if not value:
+            return None
+
+        raw = str(value).strip()
+        parsed = urlparse(raw)
+        if parsed.scheme.lower() not in {"http", "https"}:
+            return None
+        if not parsed.netloc or any(ch.isspace() for ch in parsed.netloc):
+            return None
+        if parsed.username or parsed.password:
+            return None
+
+        host = (parsed.hostname or "").strip().lower()
+        if not host or ".." in host or host.startswith(".") or host.endswith("."):
+            return None
+
+        normalized = ParseResult(
+            scheme=parsed.scheme.lower(),
+            netloc=parsed.netloc,
+            path=parsed.path or "/",
+            params="",
+            query=parsed.query,
+            fragment="",
+        )
+        return urlunparse(normalized)
 
     async def search(
         self,
@@ -90,20 +118,37 @@ class TavilySearchProvider(SearchProvider):
         ) as client:
             response = await client.post(url, headers=headers, json=payload)
             response.raise_for_status()
-            data = response.json()
+            try:
+                data = response.json()
+            except ValueError as exc:
+                raise ValueError("Tavily returned invalid JSON.") from exc
+
+        if not isinstance(data, dict):
+            raise ValueError("Tavily returned an unexpected response shape.")
 
         raw_results = data.get("results", [])
+        if not isinstance(raw_results, list):
+            raw_results = []
+
         normalized_results: list[dict] = []
+        seen_urls: set[str] = set()
 
         for item in raw_results:
-            item_url = item.get("url")
+            if not isinstance(item, dict):
+                continue
+
+            item_url = self._sanitize_http_url(item.get("url"))
             if not item_url:
                 continue
+
+            if item_url in seen_urls:
+                continue
+            seen_urls.add(item_url)
 
             hostname = urlparse(item_url).hostname
             normalized_results.append(
                 {
-                    "title": item.get("title", "Untitled"),
+                    "title": (item.get("title") or "Untitled").strip() or "Untitled",
                     "url": item_url,
                     "snippet": self._clean_provider_snippet(item.get("content")),
                     "score": item.get("score"),

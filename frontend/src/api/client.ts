@@ -9,6 +9,8 @@ import type {
   HealthResponse,
   SearchHistoryItem,
   ExtractHistoryItem,
+  ResearchTaskResponse,
+  ResearchTaskStatusResponse,
 } from '../types'
 
 const API_BASE = '/api/v1'
@@ -174,4 +176,10 @@ export const apiClient = {
 
   extractHistory: (limit = 20) =>
     request<ExtractHistoryItem[]>(`/extract/history?limit=${limit}`),
+
+  submitResearchTask: (payload: { query: string; focus?: string; max_sources?: number }) =>
+    request<ResearchTaskResponse>('/research/tasks', 'POST', payload),
+
+  getResearchTask: (taskId: string) =>
+    request<ResearchTaskStatusResponse>(`/research/tasks/${encodeURIComponent(taskId)}`),
 }

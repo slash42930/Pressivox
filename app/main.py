@@ -9,7 +9,6 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from sqlalchemy import inspect, text
 
 from app.api.deps import require_roles
 from app.api.routes.auth import router as auth_router
@@ -22,123 +21,19 @@ from app.api.routes.tavily_map import router as tavily_map_router
 from app.api.routes.tavily_research import router as tavily_research_router
 from app.core.config import get_settings
 from app.core.database import Base, engine
+from app.core.startup_migrations import run_startup_schema_patches
 
 settings = get_settings()
 settings.validate_security()
 Base.metadata.create_all(bind=engine)
-
-
-def ensure_search_history_columns() -> None:
-    """Add search_history columns for existing databases if missing."""
-    try:
-        inspector = inspect(engine)
-        if "search_history" not in inspector.get_table_names():
-            return
-
-        columns = {column["name"] for column in inspector.get_columns("search_history")}
-        column_patches = {
-            "user_id": "ALTER TABLE search_history ADD COLUMN user_id INTEGER",
-            "session_id": "ALTER TABLE search_history ADD COLUMN session_id VARCHAR(128)",
-            "ambiguous": "ALTER TABLE search_history ADD COLUMN ambiguous BOOLEAN DEFAULT 0",
-            "selected_source_count": "ALTER TABLE search_history ADD COLUMN selected_source_count INTEGER DEFAULT 0",
-            "meaning_group_count": "ALTER TABLE search_history ADD COLUMN meaning_group_count INTEGER DEFAULT 0",
-            "has_summary": "ALTER TABLE search_history ADD COLUMN has_summary BOOLEAN DEFAULT 0",
-        }
-
-        missing = [statement for name, statement in column_patches.items() if name not in columns]
-        if not missing:
-            return
-
-        with engine.begin() as connection:
-            for statement in missing:
-                connection.execute(text(statement))
-    except Exception:
-        # Non-fatal schema upgrade path for local dev databases.
-        pass
-
-
-def ensure_user_columns() -> None:
-    """Add users table columns for existing databases if missing."""
-    try:
-        inspector = inspect(engine)
-        if "users" not in inspector.get_table_names():
-            return
-
-        columns = {column["name"] for column in inspector.get_columns("users")}
-        missing = []
-        if "role" not in columns:
-            missing.append("ALTER TABLE users ADD COLUMN role VARCHAR(32) DEFAULT 'user'")
-
-        with engine.begin() as connection:
-            for statement in missing:
-                connection.execute(text(statement))
-            connection.execute(text("UPDATE users SET role='user' WHERE role IS NULL"))
-            connection.execute(
-                text(
-                    "UPDATE users SET role='admin' "
-                    "WHERE id=(SELECT MIN(id) FROM users) AND role='user'"
-                )
-            )
-    except Exception:
-        pass
-
-
-def ensure_extracted_document_columns() -> None:
-    """Add extracted_documents columns for existing databases if missing."""
-    try:
-        inspector = inspect(engine)
-        if "extracted_documents" not in inspector.get_table_names():
-            return
-
-        columns = {column["name"] for column in inspector.get_columns("extracted_documents")}
-        missing = []
-        if "user_id" not in columns:
-            missing.append("ALTER TABLE extracted_documents ADD COLUMN user_id INTEGER")
-
-        if not missing:
-            return
-
-        with engine.begin() as connection:
-            for statement in missing:
-                connection.execute(text(statement))
-    except Exception:
-        pass
-
-
-def backfill_history_user_ids() -> None:
-    """Associate legacy history rows to the first user if exactly one user exists."""
-    try:
-        with engine.begin() as connection:
-            user_count = connection.execute(text("SELECT COUNT(*) FROM users")).scalar()
-            if user_count != 1:
-                return
-
-            first_user_id = connection.execute(text("SELECT MIN(id) FROM users")).scalar()
-            if first_user_id is None:
-                return
-
-            connection.execute(
-                text("UPDATE search_history SET user_id=:uid WHERE user_id IS NULL"),
-                {"uid": first_user_id},
-            )
-            connection.execute(
-                text("UPDATE extracted_documents SET user_id=:uid WHERE user_id IS NULL"),
-                {"uid": first_user_id},
-            )
-    except Exception:
-        pass
-
-
-ensure_search_history_columns()
-ensure_user_columns()
-ensure_extracted_document_columns()
-backfill_history_user_ids()
+run_startup_schema_patches(engine)
 
 cors_origins = settings.cors_origins_list
 allow_credentials = "*" not in cors_origins
 
 BASE_DIR = Path(__file__).resolve().parent
 SPA_DIR = BASE_DIR / "static" / "spa"
+NOT_FOUND_DETAIL = "Not Found"
 
 limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
@@ -189,18 +84,18 @@ app.include_router(tavily_crawl_router, prefix=settings.api_v1_prefix, dependenc
 app.include_router(tavily_research_router, prefix=settings.api_v1_prefix, dependencies=[Depends(require_roles("admin"))])
 
 
-@app.get("/", include_in_schema=False)
+@app.get("/", include_in_schema=False, responses={404: {"description": "Not Found"}})
 async def serve_spa_root() -> FileResponse:
     index_path = SPA_DIR / "index.html"
     if index_path.is_file():
         return FileResponse(index_path)
-    raise HTTPException(status_code=404, detail="Not Found")
+    raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
 
-@app.get("/{full_path:path}", include_in_schema=False)
+@app.get("/{full_path:path}", include_in_schema=False, responses={404: {"description": "Not Found"}})
 async def serve_spa_fallback(full_path: str) -> FileResponse:
     if full_path.startswith("api/") or full_path.startswith("static/"):
-        raise HTTPException(status_code=404, detail="Not Found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     candidate = SPA_DIR / full_path
     if candidate.is_file():
@@ -210,4 +105,4 @@ async def serve_spa_fallback(full_path: str) -> FileResponse:
     if index_path.is_file():
         return FileResponse(index_path)
 
-    raise HTTPException(status_code=404, detail="Not Found")
+    raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)

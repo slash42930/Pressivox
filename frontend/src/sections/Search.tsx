@@ -11,69 +11,22 @@ import { Card } from '../components/ui/Card'
 import { Label } from '../components/ui/Label'
 import { SkeletonResultCard } from '../components/ui/Skeleton'
 import { SpotlightCard } from '../components/effects/AnimatedBackground'
-import type { SearchRequest, SearchResponse, SearchResult, QueryAnalysisResponse } from '../types'
+import type { SearchResponse, SearchResult, QueryAnalysisResponse } from '../types'
 import { SearchCards } from '../components/SearchCards'
 import { SelectedSources } from '../components/SelectedSources'
 import { MeaningGroups } from '../components/MeaningGroups'
 import { ComparePanel } from '../components/ComparePanel'
 import { EmptyState } from '../components/EmptyState'
-import { parseDomains, toIsoDate, copyToClipboard, sortResults, type SortMode } from '../utils'
+import { copyToClipboard, sortResults, type SortMode } from '../utils'
+import { buildSearchPayload, type SearchPayloadFormValues } from '../utils/searchPayload'
+import { toggleCompareItems } from '../utils/compare'
+import { useAsyncAction } from '../hooks/useAsyncAction'
 
-interface SearchForm {
-  query: string
-  topic: 'general' | 'news'
-  language: 'english' | 'romanian'
-  maxResults: number
-  includeDomains: string
-  excludeDomains: string
-  maxAgeDays: number
-  startDate: string
-  endDate: string
-}
+interface SearchForm extends SearchPayloadFormValues {}
 
 interface SearchSectionProps {
   initialQuery?: string
   onSearchComplete: (response: SearchResponse) => void
-}
-
-function buildPayload(form: SearchForm): SearchRequest {
-  let start = form.startDate || null
-  let end = form.endDate || null
-
-  if (form.maxAgeDays > 0) {
-    const now = new Date()
-    const s = new Date(now)
-    s.setDate(s.getDate() - form.maxAgeDays)
-    start = toIsoDate(s)
-    end = toIsoDate(now)
-  }
-
-  const manualDomains = parseDomains(form.includeDomains)
-  const includeDomains = manualDomains.length > 0
-    ? manualDomains
-    : []
-
-  return {
-    query: form.query,
-    topic: form.topic,
-    language: form.language,
-    max_results: form.maxResults,
-    summarize: true,
-    extract_top_results: true,
-    include_domains: includeDomains,
-    exclude_domains: parseDomains(form.excludeDomains),
-    search_depth: 'advanced',
-    time_range: start || end ? null : null,
-    start_date: start,
-    end_date: end,
-    exact_match: false,
-    include_answer: true,
-    include_raw_content: true,
-    include_images: false,
-    include_image_descriptions: false,
-    include_favicon: true,
-    auto_parameters: true,
-  }
 }
 
 function defaultInclude(topic: string, language: string): string {
@@ -99,10 +52,8 @@ export function SearchSection({ initialQuery = 'latest AI news', onSearchComplet
     startDate: '',
     endDate: '',
   })
-  const [loading, setLoading] = useState(false)
+  const { loading, status, errorMsg, runAction } = useAsyncAction()
   const [analysisLoading, setAnalysisLoading] = useState(false)
-  const [status, setStatus] = useState('')
-  const [errorMsg, setErrorMsg] = useState('')
   const [response, setResponse] = useState<SearchResponse | null>(null)
   const [sortMode, setSortMode] = useState<SortMode>('relevance')
   const [compareItems, setCompareItems] = useState<SearchResult[]>([])
@@ -112,33 +63,35 @@ export function SearchSection({ initialQuery = 'latest AI news', onSearchComplet
 
   const handleRunSearch = useCallback(async () => {
     if (!form.query.trim()) return
-    setLoading(true)
-    setErrorMsg('')
-    setStatus('Searching…')
-    try {
-      const payload = buildPayload(form)
-      const data = await apiClient.search(payload)
-      setResponse(data)
-      setSortMode('relevance')
-      setCompareItems(prev =>
-        prev.filter(c => data.results.some(r => r.url + r.title === c.url + c.title)),
-      )
-      onSearchComplete(data)
-      const msg = data.ambiguous
-        ? `Found ${data.results.length} results (ambiguous query).`
-        : `Found ${data.results.length} results.`
-      setStatus(msg)
-      addToast(msg, 'success')
-    } catch (err) {
-      const msg = (err as Error).message
-      setErrorMsg(msg)
-      setStatus('')
-      addToast(msg, 'error')
-      setResponse(null)
-    } finally {
-      setLoading(false)
-    }
-  }, [form, onSearchComplete, addToast])
+    const payload = buildSearchPayload(form, { allowTimeRange: false })
+    await runAction(
+      () => apiClient.search(payload),
+      {
+        pendingStatus: 'Searching…',
+        successStatus: data => (
+          data.ambiguous
+            ? `Found ${data.results.length} results (ambiguous query).`
+            : `Found ${data.results.length} results.`
+        ),
+        onSuccess: data => {
+          setResponse(data)
+          setSortMode('relevance')
+          setCompareItems(prev =>
+            prev.filter(c => data.results.some(r => r.url + r.title === c.url + c.title)),
+          )
+          onSearchComplete(data)
+          const msg = data.ambiguous
+            ? `Found ${data.results.length} results (ambiguous query).`
+            : `Found ${data.results.length} results.`
+          addToast(msg, 'success')
+        },
+        onError: (msg: string) => {
+          addToast(msg, 'error')
+          setResponse(null)
+        },
+      },
+    )
+  }, [form, onSearchComplete, addToast, runAction])
 
   const handleAnalyze = useCallback(async () => {
     if (!form.query.trim()) return
@@ -155,11 +108,12 @@ export function SearchSection({ initialQuery = 'latest AI news', onSearchComplet
   }, [form.query, form.topic, addToast])
 
   const handleToggleCompare = useCallback((item: SearchResult) => {
-    const key = item.url + item.title
     setCompareItems(prev => {
-      if (prev.some(c => c.url + c.title === key)) return prev.filter(c => c.url + c.title !== key)
-      if (prev.length >= 3) { addToast('Compare panel is full (max 3 items).', 'info'); return prev }
-      return [...prev, item]
+      const update = toggleCompareItems(prev, item, 3)
+      if (update.maxReached) {
+        addToast('Compare panel is full (max 3 items).', 'info')
+      }
+      return update.next
     })
   }, [addToast])
 

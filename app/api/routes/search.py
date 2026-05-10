@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_optional_current_user
+from app.api.error_utils import map_network_error, map_provider_data_error, map_provider_error
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.search import QueryAnalysisResponse, SearchHistoryItem, SearchRequest, SearchResponse
@@ -35,12 +36,14 @@ async def search_web(
         )
         return SearchResponse(**data)
     except ValueError as exc:
+        detail = str(exc)
+        if detail.lower().startswith("tavily returned"):
+            raise map_provider_data_error() from exc
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
-        status = exc.response.status_code if exc.response else 502
-        raise HTTPException(status_code=502, detail=f"Search provider returned HTTP {status}.") from exc
+        raise map_provider_error(exc) from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail="Search provider network error. Try again later.") from exc
+        raise map_network_error(exc) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail="Search failed. Try again later.") from exc
 

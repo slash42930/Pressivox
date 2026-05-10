@@ -75,6 +75,8 @@ Then open:
 - Runtime/start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Set environment variables from `.env.example`
 - Configure `CORS_ALLOW_ORIGINS` to your frontend domain(s)
+- For free persistent database hosting, use Neon Postgres free tier and set `DATABASE_URL` to the Neon connection string (`sslmode=require`).
+- Do not use SQLite in serverless production deployments.
 
 ## Main endpoints
 
@@ -206,3 +208,30 @@ The original single-file UI is preserved at `app/static/web-search-backend-ui-mo
   "time_range": "month"
 }
 ```
+
+## Research response notes
+
+`POST /api/v1/research` keeps existing fields (`summary`, `summary_points`, `summary_markdown`, `results`) and now also returns optional structured sections under `sections`:
+
+- `concise_summary`
+- `key_findings`
+- `detailed_analysis`
+- `sources`
+- `limitations`
+- `suggested_follow_up_queries`
+- `confidence`
+
+This preserves backward compatibility while enabling richer frontend rendering.
+
+## Tavily task lifecycle notes
+
+`GET /api/v1/research/tasks/{task_id}` now returns a normalized task envelope for safer polling behavior:
+
+- `task_id`
+- `status` (`queued`, `running`, `completed`, `failed`, or `unknown`)
+- `is_terminal`
+- `result_count`
+- `result_sources`
+- `error_message`
+
+Network failures and timeouts are mapped to stable API errors (`502`/`504`) without leaking raw internals.

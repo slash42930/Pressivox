@@ -16,6 +16,16 @@ from .text_cleaning import (
 )
 
 
+def _normalize_entity_focused_text(raw_text: str, title: str) -> str:
+    """Normalize text around a title/entity for cleaner summarization input."""
+    entity = strip_parenthetical_suffix(title)
+    normalized = remove_leading_title_echo(raw_text, title)
+    normalized = remove_prefix_before_entity(normalized, entity)
+    normalized = remove_meta_noise(normalized)
+    normalized = remove_prefix_before_entity(normalized, entity)
+    return normalized
+
+
 def clean_summary_snippet(text: str, max_chars: int = 400, title: str | None = None, is_snippet: bool = True) -> str:
     """Clean and prepare a summary snippet from raw text.
 
@@ -43,21 +53,16 @@ def clean_summary_snippet(text: str, max_chars: int = 400, title: str | None = N
         return ""
 
     if is_snippet:
-        entity = strip_parenthetical_suffix(title or "")
         if title:
-            cleaned = remove_leading_title_echo(cleaned, title)
-        cleaned = remove_meta_noise(cleaned)
-        if title:
-            cleaned = remove_prefix_before_entity(cleaned, entity)
+            cleaned = _normalize_entity_focused_text(cleaned, title)
+        else:
+            cleaned = remove_meta_noise(cleaned)
         return truncate_at_sentence(cleaned, max_chars=max_chars) if cleaned else ""
 
-    entity = strip_parenthetical_suffix(title or "")
     if title:
-        cleaned = remove_leading_title_echo(cleaned, title)
-        cleaned = remove_prefix_before_entity(cleaned, entity)
-    cleaned = remove_meta_noise(cleaned)
-    if title:
-        cleaned = remove_prefix_before_entity(cleaned, entity)
+        cleaned = _normalize_entity_focused_text(cleaned, title)
+    else:
+        cleaned = remove_meta_noise(cleaned)
 
     if not cleaned or is_disambiguation_like(cleaned):
         return ""
@@ -80,10 +85,7 @@ def build_doc_summary_piece(doc: dict, title: str, max_sentences: int = 2, max_c
     else:
         raw_text = clean_text(doc.get("extracted_text", ""))
 
-    raw_text = remove_leading_title_echo(raw_text, title)
-    raw_text = remove_prefix_before_entity(raw_text, strip_parenthetical_suffix(title))
-    raw_text = remove_meta_noise(raw_text)
-    raw_text = remove_prefix_before_entity(raw_text, strip_parenthetical_suffix(title))
+    raw_text = _normalize_entity_focused_text(raw_text, title)
 
     if not raw_text or is_disambiguation_like(raw_text):
         return ""

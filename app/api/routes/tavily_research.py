@@ -1,32 +1,14 @@
 """Tavily Research (task-based) API endpoint."""
-import json
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Path
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Path
+from pydantic import BaseModel, Field
 
-from app.core.database import get_db
-from app.services.tavily_service import TavilyService
+from app.api.error_utils import map_network_error, map_provider_data_error, map_provider_error
+from app.services.tavily_service import ProviderResponseError, TavilyService
 
 router = APIRouter(prefix="/research", tags=["tavily"])
-
-
-def _tavily_error_message(exc: httpx.HTTPStatusError) -> str:
-    """Build a readable upstream error message for Tavily failures."""
-    status = exc.response.status_code if exc.response else 502
-    body = ""
-    if exc.response is not None:
-        try:
-            parsed = exc.response.json()
-            body = json.dumps(parsed)[:500]
-        except Exception:
-            body = (exc.response.text or "")[:500]
-
-    if body:
-        return f"Tavily returned HTTP {status}: {body}"
-    return f"Tavily returned HTTP {status}."
 
 
 class ResearchTaskRequest(BaseModel):
@@ -45,6 +27,15 @@ class ResearchTaskResponse(BaseModel):
     created_at: str
 
 
+class ResearchTaskStatusResponse(BaseModel):
+    task_id: str
+    status: str
+    is_terminal: bool
+    result_count: int = 0
+    result_sources: list[dict] = Field(default_factory=list)
+    error_message: str | None = None
+
+
 @router.post(
     "/tasks",
     responses={
@@ -54,7 +45,6 @@ class ResearchTaskResponse(BaseModel):
 )
 async def submit_research_task(
     payload: ResearchTaskRequest,
-    db: Annotated[Session, Depends(get_db)],
 ) -> ResearchTaskResponse:
     """Submit a research task to Tavily."""
     try:
@@ -65,14 +55,16 @@ async def submit_research_task(
             max_sources=payload.max_sources,
         )
         return ResearchTaskResponse(**result)
+    except ProviderResponseError as exc:
+        raise map_provider_data_error(provider_label="Tavily") from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=502, detail=_tavily_error_message(exc)) from exc
+        raise map_provider_error(exc, provider_label="Tavily") from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Tavily network error: {exc}") from exc
+        raise map_network_error(exc, provider_label="Tavily") from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Task submission failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Task submission failed.") from exc
 
 
 @router.get(
@@ -85,13 +77,14 @@ async def submit_research_task(
 )
 async def get_research_task(
     task_id: Annotated[str, Path(description="Task ID from Tavily")],
-    db: Annotated[Session, Depends(get_db)],
-) -> dict:
+) -> ResearchTaskStatusResponse:
     """Get research task status and results from Tavily."""
     try:
         service = TavilyService()
         result = await service.get_research_task(task_id=task_id)
         return result
+    except ProviderResponseError as exc:
+        raise map_provider_data_error(provider_label="Tavily") from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
@@ -101,8 +94,8 @@ async def get_research_task(
                 status_code=404,
                 detail=f"Task {task_id} not found.",
             ) from exc
-        raise HTTPException(status_code=502, detail=_tavily_error_message(exc)) from exc
+        raise map_provider_error(exc, provider_label="Tavily") from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Tavily network error: {exc}") from exc
+        raise map_network_error(exc, provider_label="Tavily") from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Task retrieval failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Task retrieval failed.") from exc

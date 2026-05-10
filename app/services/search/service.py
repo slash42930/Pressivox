@@ -1,5 +1,6 @@
 """Main search service class."""
 
+import httpx
 from sqlalchemy.orm import Session
 
 from app.models.search import SearchHistory
@@ -239,7 +240,7 @@ class SearchService:
                         query=request.query,
                     )
                     extracted_docs.append(extracted)
-                except Exception:
+                except (httpx.HTTPError, ValueError):
                     continue
 
             extracted_count = len(extracted_docs)

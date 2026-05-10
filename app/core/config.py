@@ -1,4 +1,5 @@
 from functools import lru_cache
+import os
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -37,6 +38,11 @@ class Settings(BaseSettings):
     def validate_security(self) -> None:
         """Raise if insecure defaults are used in a non-development environment."""
         insecure_keys = {"change-this-secret-key", "", "secret", "dev"}
+        if os.getenv("VERCEL") and self.database_url.startswith("sqlite"):
+            raise RuntimeError(
+                "DATABASE_URL must use a persistent database on Vercel (for example Postgres). "
+                "SQLite on serverless instances causes user accounts and login state to disappear across devices."
+            )
         if self.app_env != "development" and self.auth_secret_key in insecure_keys:
             raise RuntimeError(
                 "AUTH_SECRET_KEY must be set to a secure random value in non-development environments. "

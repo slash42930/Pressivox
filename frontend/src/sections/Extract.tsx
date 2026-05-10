@@ -11,6 +11,7 @@ import { Badge } from '../components/ui/Badge'
 import { Label } from '../components/ui/Label'
 import { SpotlightCard } from '../components/effects/AnimatedBackground'
 import { ProgressBar } from '../components/ProgressBar'
+import { useAsyncAction } from '../hooks/useAsyncAction'
 
 interface ExtractSectionProps {
   initialUrl?: string
@@ -22,30 +23,28 @@ export function ExtractSection({
   onExtractComplete,
 }: ExtractSectionProps) {
   const [url, setUrl] = useState(initialUrl)
-  const [loading, setLoading] = useState(false)
-  const [status, setStatus] = useState('')
-  const [errorMsg, setErrorMsg] = useState('')
+  const { loading, status, errorMsg, runAction } = useAsyncAction()
   const [response, setResponse] = useState<ExtractResponse | null>(null)
 
   const handleExtract = useCallback(async () => {
     const trimmed = url.trim()
     if (!trimmed) return
-    setLoading(true)
-    setErrorMsg('')
-    setStatus('Extracting…')
-    try {
-      const data = await apiClient.extract(trimmed)
-      setResponse(data)
-      onExtractComplete()
-      setStatus(`Extraction completed.`)
-    } catch (err) {
-      setErrorMsg(`Extraction failed: ${(err as Error).message}`)
-      setStatus('')
-      setResponse(null)
-    } finally {
-      setLoading(false)
-    }
-  }, [url, onExtractComplete])
+    await runAction(
+      () => apiClient.extract(trimmed),
+      {
+        pendingStatus: 'Extracting…',
+        successStatus: 'Extraction completed.',
+        onSuccess: data => {
+          setResponse(data)
+          onExtractComplete()
+        },
+        getErrorMessage: err => `Extraction failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        onError: () => {
+          setResponse(null)
+        },
+      },
+    )
+  }, [url, onExtractComplete, runAction])
 
   return (
     <div className="space-y-4">

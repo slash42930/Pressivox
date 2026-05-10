@@ -1,12 +1,8 @@
 """Tavily Map API endpoint."""
-from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, HttpUrl
-from sqlalchemy.orm import Session
-
-from app.core.database import get_db
 from app.services.tavily_service import TavilyService
 
 router = APIRouter(prefix="/map", tags=["tavily"])
@@ -30,7 +26,6 @@ class MapRequest(BaseModel):
 )
 async def get_map(
     payload: MapRequest,
-    db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     """Retrieve map data from Tavily."""
     try:
@@ -50,4 +45,4 @@ async def get_map(
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Tavily network error: {exc}") from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Map retrieval failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Map retrieval failed.") from exc

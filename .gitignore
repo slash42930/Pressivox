@@ -64,7 +64,12 @@ random_word_analysis_report.json
 
 # Local AI skill sources
 .ai-skill-sources/
+.github/skills/
+.github/copilot-instructions.md
 
 # Prompt artifacts
 *.prompt.md
 .github/prompts/
+
+.vercel
+.env*.local

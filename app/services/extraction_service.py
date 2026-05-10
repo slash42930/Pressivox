@@ -492,7 +492,7 @@ class ExtractionService:
 
         try:
             tavily_result = await self._extract_with_tavily(url, query=query)
-        except Exception:
+        except (httpx.HTTPError, ValueError):
             tavily_result = None
 
         result = tavily_result or await self._extract_with_readability(url, query=query)

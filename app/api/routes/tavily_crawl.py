@@ -1,12 +1,8 @@
 """Tavily Crawl API endpoint."""
-from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
-from app.core.database import get_db
 from app.services.tavily_service import TavilyService
 
 router = APIRouter(prefix="/crawl", tags=["tavily"])
@@ -30,7 +26,6 @@ class CrawlRequest(BaseModel):
 )
 async def crawl_urls(
     payload: CrawlRequest,
-    db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     """Crawl URLs using Tavily."""
     try:
@@ -50,4 +45,4 @@ async def crawl_urls(
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail=f"Tavily network error: {exc}") from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Crawl failed: {exc}") from exc
+        raise HTTPException(status_code=502, detail="Crawl failed.") from exc
