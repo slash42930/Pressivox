@@ -75,7 +75,7 @@ export function StructuredResearchSections({ response }: { response: ResearchRes
   const sections = response.sections
   const conciseSummary = sections?.concise_summary || response.summary
   const keyFindings = sections?.key_findings?.length ? sections.key_findings : response.summary_points
-  const detailedAnalysis = sections?.detailed_analysis || response.summary_markdown
+  const detailedAnalysis = sections?.detailed_analysis ?? null
   const limitations = sections?.limitations || []
   const followUps = sections?.suggested_follow_up_queries || []
   const sourceCards = sections?.sources?.length ? sections.sources : response.results
