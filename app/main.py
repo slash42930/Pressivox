@@ -5,10 +5,8 @@ from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
 
 from app.api.deps import require_roles
 from app.api.routes.auth import router as auth_router
@@ -21,6 +19,7 @@ from app.api.routes.tavily_map import router as tavily_map_router
 from app.api.routes.tavily_research import router as tavily_research_router
 from app.core.config import get_settings
 from app.core.database import Base, engine
+from app.core.limiter import limiter
 from app.core.startup_migrations import run_startup_schema_patches
 
 settings = get_settings()
@@ -35,8 +34,6 @@ BASE_DIR = Path(__file__).resolve().parent
 SPA_DIR = BASE_DIR / "static" / "spa"
 NOT_FOUND_DETAIL = "Not Found"
 
-limiter = Limiter(key_func=get_remote_address, default_limits=[])
-
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
@@ -49,7 +46,6 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

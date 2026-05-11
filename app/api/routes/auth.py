@@ -1,8 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from app.core.limiter import limiter
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
@@ -19,7 +18,6 @@ from app.schemas.auth import (
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post(
