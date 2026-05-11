@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+from unittest.mock import patch
 
 import pytest
 
@@ -10,18 +11,34 @@ if str(ROOT) not in sys.path:
 
 @pytest.fixture(autouse=True, scope="session")
 def disable_rate_limiting():
-    """Disable slowapi rate limiting for the entire test session.
+    """Patch slowapi at the class level so no rate limit fires during tests.
 
-    test_auth.py alone makes 5 calls to /auth/register, exhausting the
-    5/minute limit before test_search.py can register its test user.
-    Rate limiting is an operational concern; correctness tests should not
-    depend on or be broken by it.
+    _enabled=False is version-sensitive; patching _check_request_limit on the
+    class is version-agnostic and affects every Limiter instance immediately.
     """
-    from app.api.routes.auth import limiter as auth_limiter
-    from app.main import limiter as main_limiter
+    with patch("slowapi.extension.Limiter._check_request_limit"):
+        yield
 
-    auth_limiter._enabled = False
-    main_limiter._enabled = False
-    yield
-    auth_limiter._enabled = True
-    main_limiter._enabled = True
+
+@pytest.fixture(autouse=True, scope="session")
+def pre_create_test_user(disable_rate_limiting):
+    """Create the shared test-user directly in the DB before any test runs.
+
+    test_search.py calls _auth_headers() which tries login first and only
+    falls back to /register if login fails.  By pre-creating the user here
+    the first login succeeds and /register is never called, so the 5/minute
+    rate limit on that endpoint is never relevant.
+    """
+    from app.core.database import SessionLocal
+    from app.services.auth_service import AuthService
+
+    db = SessionLocal()
+    try:
+        svc = AuthService(db)
+        try:
+            svc.register_user("test-user", "test-pass-123")
+        except Exception:
+            pass  # already exists — that's fine
+    finally:
+        db.close()
+
