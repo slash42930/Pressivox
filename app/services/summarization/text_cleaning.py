@@ -2,6 +2,97 @@
 
 import re
 
+# ---------------------------------------------------------------------------
+# UI / boilerplate patterns
+# ---------------------------------------------------------------------------
+
+# Wikipedia-style toolbar words that appear as a sequence in extracted text.
+_WIKI_NAV_SEQUENCE_RE = re.compile(
+    r"\b(Print|Email|Cite|Translate|Listen|Bookmark|Download|Share|Watch|Edit|Unwatch)"
+    r"(?:\s+\b(Print|Email|Cite|Translate|Listen|Share|Bookmark|Download|Watch|Edit|View|History|Unwatch)\b){1,10}",
+    re.IGNORECASE,
+)
+
+# Image / photo credits:  © person/agency/stock.adobe.com ...
+_IMAGE_CREDIT_STOCK_RE = re.compile(
+    r"©\s*[^©\n]{1,130}?"
+    r"(?:stock\.adobe\.com|gettyimages?\.com|shutterstock\.com|alamy\.com|"
+    r"istockphoto\.com|corbis\.com|depositphotos\.com|dreamstime\.com|"
+    r"123rf\.com|bigstockphoto\.com)",
+    re.IGNORECASE,
+)
+
+# Generic standalone © with photo/photographer/media keyword (covers e.g. "© NASA/JPL").
+_IMAGE_CREDIT_GENERIC_RE = re.compile(
+    r"©\s+[A-Za-z][^\n.!?©]{5,80}?"
+    r"(?:photography|photographer|photo|images?|media|agency|press)\b[^\n.!?©]{0,40}",
+    re.IGNORECASE,
+)
+
+# "Photo credit: ...", "Image courtesy of: ..."
+_PHOTO_CREDIT_LABEL_RE = re.compile(
+    r"\b(?:Photo|Image)\s+(?:credit|courtesy(?:\s+of)?)\s*:?\s*[^.!?\n]{0,80}",
+    re.IGNORECASE,
+)
+
+# Social share / follow CTAs
+_SOCIAL_SHARE_RE = re.compile(
+    r"\b(?:Share|Post|Tweet|Follow)\s+(?:on\s+)?"
+    r"(?:Facebook|Twitter|X\.com|LinkedIn|Instagram|Pinterest|YouTube|"
+    r"WhatsApp|Telegram|Reddit|TikTok)\b",
+    re.IGNORECASE,
+)
+
+# Subscribe / newsletter CTAs
+_SUBSCRIBE_RE = re.compile(
+    r"\bSubscribe\s+(?:to|for)\s+(?:our\s+)?[^.!?\n]{0,80}?"
+    r"(?:newsletter|updates?|alerts?|emails?)\b",
+    re.IGNORECASE,
+)
+
+# "All rights reserved" footer
+_ALL_RIGHTS_RE = re.compile(r"\bAll\s+rights\s+reserved\.?\s*", re.IGNORECASE)
+
+# Breadcrumb-style navigation like "Home > Category > ..."
+_BREADCRUMB_RE = re.compile(r"\bHome\s*[/>]\s*[A-Za-z][A-Za-z\s/>]{0,80}\b", re.IGNORECASE)
+
+
+def remove_ui_boilerplate(text: str) -> str:
+    """Remove common website UI boilerplate that leaks into extracted content.
+
+    Handles: Wikipedia navigation toolbars, image credits, social share CTAs,
+    subscribe prompts, copyright footers, and breadcrumb navigation.
+    """
+    if not text:
+        return text
+
+    # Wikipedia-style toolbar sequences ("Print Email Cite Translate Listen ...")
+    text = _WIKI_NAV_SEQUENCE_RE.sub("", text)
+
+    # Image credits with known stock-photo domain names
+    text = _IMAGE_CREDIT_STOCK_RE.sub("", text)
+
+    # Generic photo credit with descriptive keyword
+    text = _IMAGE_CREDIT_GENERIC_RE.sub("", text)
+
+    # "Photo credit: ..." / "Image courtesy of: ..."
+    text = _PHOTO_CREDIT_LABEL_RE.sub("", text)
+
+    # Social share / follow CTAs
+    text = _SOCIAL_SHARE_RE.sub("", text)
+
+    # Subscribe/newsletter CTAs
+    text = _SUBSCRIBE_RE.sub("", text)
+
+    # "All rights reserved"
+    text = _ALL_RIGHTS_RE.sub("", text)
+
+    # Breadcrumb navigation
+    text = _BREADCRUMB_RE.sub("", text)
+
+    text = re.sub(r"\s{2,}", " ", text)
+    return text.strip()
+
 
 def clean_text(value: str) -> str:
     """Clean text by fixing encoding issues and normalizing whitespace."""
@@ -211,6 +302,7 @@ def remove_meta_noise(text: str) -> str:
     text = re.sub(r"^\d+\.\d+\s+", "", text, flags=re.MULTILINE)
     text = re.sub(r"^\#{1,6}", "", text, flags=re.MULTILINE)
 
+    text = remove_ui_boilerplate(text)
     text = remove_intro_noise(text)
     text = remove_pronunciation_noise(text)
     text = remove_reference_noise(text)

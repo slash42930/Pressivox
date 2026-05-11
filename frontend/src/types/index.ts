@@ -111,6 +111,8 @@ export interface ResearchSourceItem {
   snippet?: string
   score?: number
   published_date?: string
+  quality_score?: number
+  relevance_score?: number
 }
 
 export interface ResearchSections {
@@ -121,6 +123,7 @@ export interface ResearchSections {
   limitations: string[]
   suggested_follow_up_queries: string[]
   confidence?: 'low' | 'medium' | 'high'
+  omitted_sources?: string[]
 }
 
 export interface ExtractResponse {

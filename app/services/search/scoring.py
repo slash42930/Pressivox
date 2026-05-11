@@ -117,6 +117,10 @@ QUERY_INTENT_HINTS = {
     "finance": {"ft.com", "economist.com", "wsj.com", "bloomberg.com", "imf.org", "worldbank.org"},
     "inflation": {"ft.com", "economist.com", "wsj.com", "bloomberg.com", "imf.org", "oecd.org"},
     "ai": {"openai.com", "mit.edu", "stanford.edu", "nature.com", "science.org"},
+    "artificial": {"openai.com", "mit.edu", "stanford.edu", "nature.com", "science.org", "oecd.org"},
+    "intelligence": {"openai.com", "mit.edu", "stanford.edu", "oecd.org", "britannica.com"},
+    "machine": {"openai.com", "mit.edu", "stanford.edu", "nature.com", "arxiv.org"},
+    "learning": {"openai.com", "mit.edu", "stanford.edu", "nature.com", "arxiv.org"},
     "health": {"who.int", "cdc.gov", "nejm.org", "thelancet.com", "nature.com"},
 }
 
@@ -127,6 +131,50 @@ QUERY_INTENT_HINTS_RO = {
     "inflatie": {"zf.ro", "economica.net", "profit.ro", "bursa.ro", "hotnews.ro"},
     "politica": {"digi24.ro", "hotnews.ro", "g4media.ro", "adevarul.ro"},
 }
+
+# ---------------------------------------------------------------------------
+# Film / entertainment mismatch detection
+# ---------------------------------------------------------------------------
+
+# Signals that a result is about a film/movie/TV production.
+_FILM_RESULT_SIGNALS: frozenset[str] = frozenset({
+    " film",
+    " movie",
+    "directed by",
+    "screenplay",
+    "starring",
+    "box office",
+    "animated film",
+    "science fiction film",
+    "horror film",
+    "comedy film",
+    "romantic comedy",
+    "documentary film",
+    "short film",
+    "imdb.com",
+    "rottentomatoes.com",
+})
+
+# Terms in the query that indicate the user is asking about a film.
+_FILM_QUERY_INTENT_TERMS: frozenset[str] = frozenset({
+    "film",
+    "movie",
+    "cinema",
+    "directed",
+    "cast",
+    "actor",
+    "actress",
+    "director",
+    "watch",
+    "imdb",
+    "review",
+    "trailer",
+    "plot",
+    "storyline",
+    "screenplay",
+    "starring",
+    "box office",
+})
 
 TOPIC_SCORE_WEIGHTS = {
     "general": {
@@ -562,6 +610,39 @@ def commercial_page_penalty(query: str, item: dict) -> int:
     return penalty
 
 
+def film_intent_mismatch_penalty(query: str, item: dict) -> int:
+    """Return a penalty when a film/movie result appears for a non-film query.
+
+    Prevents results like Spielberg's 'A.I. Artificial Intelligence' (2001) from
+    polluting research results for the technology query 'artificial intelligence'.
+    Returns 0 when the query itself has film/entertainment intent.
+    """
+    query_tokens = set(query_terms(query))
+    query_lower = query.lower()
+
+    # If the query has explicit film intent, skip the penalty entirely.
+    if query_tokens & _FILM_QUERY_INTENT_TERMS:
+        return 0
+    if any(term in query_lower for term in ("film", "movie", "cinema")):
+        return 0
+
+    title = (item.get("title") or "").lower()
+    snippet = (item.get("snippet") or "").lower()
+    url = (item.get("url") or "").lower()
+    combined = f"{title} {snippet} {url}"
+
+    signal_count = sum(1 for signal in _FILM_RESULT_SIGNALS if signal in combined)
+
+    if signal_count == 0:
+        return 0
+
+    # Strong double signal or title/URL explicitly says "film" or "movie".
+    if "film" in title or "movie" in title or signal_count >= 2:
+        return 65
+
+    return 30
+
+
 def rerank_results(query: str, topic: str, results: list[dict], language: str = "english") -> list[dict]:
     """Rerank search results based on scoring criteria."""
     reranked = []
@@ -588,6 +669,7 @@ def rerank_results(query: str, topic: str, results: list[dict], language: str = 
             - (commercial_page_penalty(query, item) * weights["commercial"])
             - (non_english_wikipedia_penalty(source) * weights["non_english_wikipedia"])
             - non_preferred_language_domain_penalty(source, language=language)
+            - film_intent_mismatch_penalty(query, item)
         )
 
         new_item = dict(item)

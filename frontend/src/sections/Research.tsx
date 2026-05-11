@@ -4,7 +4,7 @@ import { Copy, Download, AlertTriangle, BookOpen, Sparkles, SlidersHorizontal, C
 import { apiClient } from '../api/client'
 import { useToast } from '../components/Toast'
 import { ProgressBar } from '../components/ProgressBar'
-import type { ResearchResponse, SearchResult } from '../types'
+import type { ResearchResponse, ResearchSourceItem, SearchResult } from '../types'
 import { ResearchCards } from '../components/ResearchCards'
 import { SelectedSources } from '../components/SelectedSources'
 import { MeaningGroups } from '../components/MeaningGroups'
@@ -79,6 +79,15 @@ export function StructuredResearchSections({ response }: { response: ResearchRes
   const limitations = sections?.limitations || []
   const followUps = sections?.suggested_follow_up_queries || []
   const sourceCards = sections?.sources?.length ? sections.sources : response.results
+  const omittedSources = sections?.omitted_sources || []
+
+  // Render detailed analysis as readable paragraphs instead of a raw <pre>.
+  const analysisLines = detailedAnalysis
+    ? detailedAnalysis
+        .split('\n')
+        .map(l => l.replace(/^-\s*/, '').trim())
+        .filter(Boolean)
+    : []
 
   return (
     <div className="space-y-5">
@@ -96,28 +105,18 @@ export function StructuredResearchSections({ response }: { response: ResearchRes
         <SummaryView summary={conciseSummary} points={keyFindings} />
       </section>
 
-      <section aria-labelledby="research-detailed-analysis" className="space-y-2">
-        <h4 id="research-detailed-analysis" className="text-sm font-semibold uppercase tracking-wide text-fuchsia-300">
-          Detailed Analysis
-        </h4>
-        <pre className="whitespace-pre-wrap text-slate-200 leading-7 text-sm rounded-2xl bg-slate-950 border border-slate-800 p-4">
-          {detailedAnalysis || 'No detailed analysis available.'}
-        </pre>
-      </section>
-
-      {limitations.length > 0 && (
-        <section aria-labelledby="research-limitations" className="space-y-2">
-          <h4 id="research-limitations" className="text-sm font-semibold uppercase tracking-wide text-amber-300">
-            Limitations or Missing Information
+      {analysisLines.length > 0 && (
+        <section aria-labelledby="research-detailed-analysis" className="space-y-2">
+          <h4 id="research-detailed-analysis" className="text-sm font-semibold uppercase tracking-wide text-fuchsia-300">
+            Detailed Analysis
           </h4>
-          <ul className="space-y-2 text-slate-300 text-sm">
-            {limitations.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
-                <span>{item}</span>
-              </li>
+          <div className="rounded-2xl bg-slate-950 border border-slate-800 p-4 space-y-2">
+            {analysisLines.map((line, idx) => (
+              <p key={idx} className="text-slate-200 leading-7 text-sm">
+                {line}
+              </p>
             ))}
-          </ul>
+          </div>
         </section>
       )}
 
@@ -126,10 +125,29 @@ export function StructuredResearchSections({ response }: { response: ResearchRes
           <h4 id="research-follow-ups" className="text-sm font-semibold uppercase tracking-wide text-cyan-300">
             Suggested Follow-up Queries
           </h4>
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-col gap-1.5">
             {followUps.map((item, idx) => (
-              <li key={idx} className="rounded-full border border-cyan-700/40 bg-cyan-950/20 px-3 py-1 text-xs text-cyan-200">
+              <li
+                key={idx}
+                className="rounded-xl border border-cyan-700/30 bg-cyan-950/10 px-3 py-2 text-sm text-cyan-200 leading-relaxed hover:border-cyan-600/50 hover:bg-cyan-950/20 transition-colors"
+              >
                 {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {limitations.length > 0 && (
+        <section aria-labelledby="research-limitations" className="space-y-2">
+          <h4 id="research-limitations" className="text-sm font-semibold uppercase tracking-wide text-amber-300">
+            Limitations
+          </h4>
+          <ul className="space-y-2 text-slate-300 text-sm">
+            {limitations.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" aria-hidden="true" />
+                <span>{item}</span>
               </li>
             ))}
           </ul>
@@ -144,22 +162,64 @@ export function StructuredResearchSections({ response }: { response: ResearchRes
           <p className="text-sm text-slate-400">No sources available.</p>
         ) : (
           <div className="space-y-2">
-            {sourceCards.slice(0, 8).map((item, idx) => (
-              <a
-                key={`${item.url}-${idx}`}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-xl border border-emerald-900/40 bg-emerald-950/10 p-3 hover:border-emerald-600/60 transition-colors"
-              >
-                <p className="text-sm font-semibold text-emerald-200 break-words">{item.title || 'Untitled source'}</p>
-                <p className="text-xs text-emerald-300/80 break-words">{item.source || 'unknown source'}</p>
-                {item.snippet && <p className="text-xs text-slate-300 mt-1 line-clamp-2">{item.snippet}</p>}
-              </a>
-            ))}
+            {sourceCards.slice(0, 8).map((item, idx) => {
+              const qualityScore = (item as ResearchSourceItem).quality_score
+              const relevanceScore = (item as ResearchSourceItem).relevance_score
+              const qualityColor =
+                qualityScore == null ? 'border-slate-700/40 bg-slate-900/30'
+                : qualityScore >= 75 ? 'border-emerald-700/40 bg-emerald-950/10'
+                : qualityScore >= 50 ? 'border-cyan-700/40 bg-cyan-950/10'
+                : qualityScore >= 25 ? 'border-amber-700/40 bg-amber-950/10'
+                : 'border-slate-700/40 bg-slate-900/30'
+              const qualityLabel =
+                qualityScore == null ? null
+                : qualityScore >= 75 ? 'High quality'
+                : qualityScore >= 50 ? 'Good'
+                : qualityScore >= 25 ? 'Fair'
+                : null
+
+              return (
+                <a
+                  key={`${item.url}-${idx}`}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`block rounded-xl border p-3 hover:border-emerald-600/60 transition-colors ${qualityColor}`}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-0.5">
+                    <p className="text-sm font-semibold text-emerald-200 break-words leading-5">{item.title || 'Untitled source'}</p>
+                    {qualityLabel && (
+                      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-900/40 text-emerald-300 border border-emerald-700/30">
+                        {qualityLabel}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xs text-emerald-300/70">{item.source || 'unknown source'}</p>
+                    {relevanceScore != null && (
+                      <span className="text-[10px] text-slate-500">
+                        {Math.round(relevanceScore * 100)}% relevant
+                      </span>
+                    )}
+                  </div>
+                  {item.snippet && <p className="text-xs text-slate-300 mt-1 line-clamp-2">{item.snippet}</p>}
+                </a>
+              )
+            })}
           </div>
         )}
       </section>
+
+      {omittedSources.length > 0 && (
+        <section aria-labelledby="research-omitted" className="space-y-2">
+          <h4 id="research-omitted" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Sources Excluded as Off-topic
+          </h4>
+          <ul className="text-xs text-slate-600 space-y-0.5">
+            {omittedSources.map((s, i) => <li key={i}>{s}</li>)}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

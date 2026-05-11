@@ -80,6 +80,8 @@ class ResearchSourceItem(BaseModel):
     snippet: str | None = None
     score: float | None = None
     published_date: str | None = None
+    quality_score: int | None = None
+    relevance_score: float | None = None
 
 
 class ResearchSections(BaseModel):
@@ -90,6 +92,7 @@ class ResearchSections(BaseModel):
     limitations: list[str] = Field(default_factory=list)
     suggested_follow_up_queries: list[str] = Field(default_factory=list)
     confidence: Literal["low", "medium", "high"] | None = None
+    omitted_sources: list[str] = Field(default_factory=list)
 
 
 class SearchResponse(BaseModel):

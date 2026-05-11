@@ -3,6 +3,8 @@
 from urllib.parse import ParseResult, urlparse, urlunparse
 
 from app.services.search.result_filtering import is_good_result_for_extraction
+from app.services.search.scoring import content_relevance_score, domain_trust_score
+from app.services.search.text_processing import query_terms
 
 
 def _clean_text(value: str | None) -> str:
@@ -78,82 +80,166 @@ def _dedupe_results(results: list[dict]) -> list[dict]:
     return deduped
 
 
-def build_follow_up_queries(query: str, meaning_groups: list[dict], sources: list[dict]) -> list[str]:
-    suggestions: list[str] = []
-    normalized_query = _clean_text(query)
+def _detect_query_domain(query: str) -> str:
+    """Infer the broad domain of a query for follow-up question generation."""
+    lowered = query.lower()
+    terms = set(query_terms(query))
 
-    label_templates = {
-        "programming": [
-            "{query} language design tradeoffs",
-            "{query} implementation details",
-        ],
-        "planet": [
-            "{query} latest planetary research",
-            "{query} orbital observations",
-        ],
-        "mythology": [
-            "{query} primary mythology sources",
-            "{query} historical interpretations",
-        ],
-        "element": [
-            "{query} safety and toxicity evidence",
-            "{query} industrial applications",
-        ],
-        "company": [
-            "{query} business model analysis",
-            "{query} recent regulatory developments",
-        ],
-        "supercomputer": [
-            "{query} benchmark comparisons",
-            "{query} architecture details",
-        ],
-        "car": [
-            "{query} reliability and safety reports",
-            "{query} total cost of ownership",
-        ],
-        "film": [
-            "{query} critical reception evidence",
-            "{query} production background",
-        ],
-        "genus": [
-            "{query} habitat and conservation status",
-            "{query} taxonomy updates",
-        ],
+    ai_terms = {
+        "artificial", "intelligence", "machine", "learning", "neural", "deep",
+        "ai", "ml", "llm", "gpt", "nlp", "chatgpt", "generative", "algorithm",
+        "automation", "robotics",
     }
+    if terms & ai_terms or "artificial intelligence" in lowered:
+        return "ai_technology"
 
-    for group in meaning_groups[:3]:
-        meaning = _clean_text(group.get("meaning"))
-        meaning_key = meaning.lower()
-        if meaning and meaning_key not in {"other", "overview", "main topic"}:
-            templates = label_templates.get(meaning_key)
-            if templates:
-                suggestions.extend(template.format(query=normalized_query) for template in templates)
-            else:
-                suggestions.append(f"{normalized_query} {meaning} latest evidence")
+    tech_terms = {
+        "technology", "software", "hardware", "computer", "programming",
+        "internet", "digital", "cyber", "blockchain", "quantum", "semiconductor",
+    }
+    if terms & tech_terms:
+        return "technology"
 
-    if not suggestions:
-        suggestions.extend(
-            [
-                f"{normalized_query} key statistics",
-                f"{normalized_query} expert analysis",
-            ]
-        )
+    science_terms = {
+        "science", "physics", "chemistry", "biology", "genetics", "quantum",
+        "atom", "molecule", "evolution", "climate", "energy", "nuclear",
+    }
+    if terms & science_terms:
+        return "science"
 
-    unique_suggestions: list[str] = []
+    medical_terms = {
+        "health", "medicine", "disease", "cancer", "drug", "treatment",
+        "therapy", "virus", "vaccine", "hospital", "patient", "symptom",
+    }
+    if terms & medical_terms:
+        return "medicine"
+
+    history_terms = {
+        "history", "historical", "war", "ancient", "empire", "civilization",
+        "century", "revolution", "dynasty", "medieval", "colonial",
+    }
+    if terms & history_terms:
+        return "history"
+
+    space_terms = {
+        "space", "planet", "star", "galaxy", "nasa", "orbit", "solar",
+        "moon", "mars", "astronomy", "telescope", "exoplanet", "comet",
+    }
+    if terms & space_terms:
+        return "space"
+
+    econ_terms = {
+        "economy", "economics", "inflation", "gdp", "market", "finance",
+        "bank", "investment", "stock", "trade", "recession", "monetary",
+    }
+    if terms & econ_terms:
+        return "economics"
+
+    env_terms = {
+        "climate", "environment", "carbon", "emission", "renewable",
+        "sustainability", "biodiversity", "ecosystem", "pollution",
+    }
+    if terms & env_terms:
+        return "environment"
+
+    return "general"
+
+
+# Natural-language follow-up question templates keyed by domain.
+# {query} is substituted with the normalized query at runtime.
+_DOMAIN_FOLLOW_UP_TEMPLATES: dict[str, list[str]] = {
+    "ai_technology": [
+        "What are the main branches and types of {query}?",
+        "How is {query} applied in healthcare, finance, and education?",
+        "What are the current risks and ethical concerns surrounding {query}?",
+        "What is the difference between narrow AI, AGI, and superintelligence?",
+        "Which organizations are leading research in {query}?",
+        "What are the most significant recent breakthroughs in {query}?",
+    ],
+    "technology": [
+        "What are the core principles and components of {query}?",
+        "How is {query} transforming industry today?",
+        "What are the main advantages and limitations of {query}?",
+        "How has {query} evolved over the past decade?",
+        "What are the security and privacy implications of {query}?",
+    ],
+    "science": [
+        "What are the fundamental principles behind {query}?",
+        "What are the most significant recent discoveries in {query}?",
+        "How does {query} affect everyday life and society?",
+        "What are the open questions and frontiers in {query}?",
+        "What practical applications have emerged from research on {query}?",
+    ],
+    "medicine": [
+        "What are the most effective current treatments for {query}?",
+        "What are the main risk factors and prevention strategies related to {query}?",
+        "What does recent clinical research show about {query}?",
+        "How is {query} diagnosed and monitored?",
+        "What emerging therapies are being tested for {query}?",
+    ],
+    "history": [
+        "What were the main causes and long-term consequences of {query}?",
+        "How did {query} reshape the modern world?",
+        "Who were the key figures involved in {query}?",
+        "How do historians differ in their interpretations of {query}?",
+        "What primary sources are most valuable for studying {query}?",
+    ],
+    "space": [
+        "What are the latest scientific findings about {query}?",
+        "Which missions have explored or studied {query}?",
+        "How does {query} compare to similar objects or phenomena?",
+        "What are the biggest unanswered questions about {query}?",
+        "What instruments and methods are used to study {query}?",
+    ],
+    "economics": [
+        "What are the main drivers of {query} in the current global economy?",
+        "How does {query} affect different income groups and countries?",
+        "What policies have been most effective at managing {query}?",
+        "What do major institutions like the IMF and World Bank say about {query}?",
+        "How has {query} changed over the past ten years?",
+    ],
+    "environment": [
+        "What are the key causes and consequences of {query}?",
+        "What scientific evidence exists on the scale of {query}?",
+        "What policy and technological responses have been proposed for {query}?",
+        "How does {query} affect biodiversity and ecosystems?",
+        "What can individuals and governments do to address {query}?",
+    ],
+    "general": [
+        "What is the definition and scope of {query}?",
+        "What are the most important facts to know about {query}?",
+        "What are the main perspectives or interpretations of {query}?",
+        "How has our understanding of {query} changed over time?",
+        "What are the practical implications of {query}?",
+    ],
+}
+
+
+def build_follow_up_queries(query: str, meaning_groups: list[dict], sources: list[dict]) -> list[str]:
+    """Build natural-language follow-up questions tailored to the query's domain.
+
+    Produces human-readable questions rather than keyword-stuffed phrases,
+    regardless of whether meaning groups are present.
+    """
+    normalized = _clean_text(query)
+    if not normalized:
+        return []
+
+    domain = _detect_query_domain(normalized)
+    templates = _DOMAIN_FOLLOW_UP_TEMPLATES.get(domain, _DOMAIN_FOLLOW_UP_TEMPLATES["general"])
+
+    suggestions = [t.format(query=normalized) for t in templates[:5]]
+
+    unique: list[str] = []
     seen: set[str] = set()
     for item in suggestions:
         key = item.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        unique_suggestions.append(item)
-        if len(unique_suggestions) >= 5:
-            break
+        if key not in seen:
+            seen.add(key)
+            unique.append(item)
 
-    if not unique_suggestions and sources:
-        unique_suggestions = [f"{normalized_query} recent updates"]
+    return unique[:5]
 
-    return unique_suggestions
 
 
 def _build_limitations(
@@ -182,6 +268,23 @@ def _confidence_label(source_count: int, extracted_count: int, key_finding_count
     if source_count >= 3 and key_finding_count >= 2:
         return "medium"
     return "low"
+
+
+def _source_quality_score(item: dict) -> int:
+    """Return a 0–100 quality score for a source based on domain trust."""
+    source = item.get("source") or ""
+    trust = domain_trust_score(source)
+    # trust is typically 0–22; normalise to 0–100.
+    return min(100, round((trust / 22) * 100))
+
+
+def _source_relevance_score(query: str, item: dict) -> float:
+    """Return a 0.0–1.0 relevance score for a source against the query."""
+    raw = content_relevance_score(query, item)
+    query_terms_list = query_terms(query)
+    # Max possible raw score: len(query_terms)*5 (title) + len(query_terms)*2 (snippet)
+    max_possible = max(1, len(query_terms_list) * 7)
+    return round(min(1.0, raw / max_possible), 3)
 
 
 def build_research_results(results: list[dict]) -> list[dict]:
@@ -229,9 +332,18 @@ def _build_structured_sections(
             "snippet": item.get("snippet"),
             "score": item.get("score"),
             "published_date": item.get("published_date"),
+            "quality_score": _source_quality_score(item),
+            "relevance_score": _source_relevance_score(query, item),
         }
         for item in clean_results[:8]
     ]
+
+    # Sort sources so highest quality + relevance appear first.
+    source_items.sort(
+        key=lambda s: (s["quality_score"], s["relevance_score"]),
+        reverse=True,
+    )
+
 
     limitations = _build_limitations(
         query=query,
@@ -248,6 +360,7 @@ def _build_structured_sections(
         "limitations": limitations,
         "suggested_follow_up_queries": build_follow_up_queries(query, meaning_groups, source_items),
         "confidence": _confidence_label(len(clean_results), extracted_count, len(summary_points)),
+        "omitted_sources": [],
     }
 
 

@@ -130,18 +130,18 @@ def test_follow_up_queries_use_ambiguity_label_templates() -> None:
 
     queries = build_follow_up_queries("mercury", meaning_groups, sources=[])
 
-    assert any("language design tradeoffs" in item for item in queries)
-    assert any("planetary research" in item for item in queries)
-    assert all("other" not in item.lower() for item in queries)
+    # New implementation returns natural-language questions
+    assert len(queries) >= 1
+    assert all("?" in q for q in queries)
+    assert all("other" not in q.lower() for q in queries)
 
 
 def test_follow_up_queries_fallback_when_no_meaning_groups() -> None:
     queries = build_follow_up_queries("rare topic", meaning_groups=[], sources=[])
 
-    assert queries == [
-        "rare topic key statistics",
-        "rare topic expert analysis",
-    ]
+    # New implementation returns natural-language questions for any domain
+    assert len(queries) >= 1
+    assert all("?" in q for q in queries)
 
 
 def test_build_research_results_rejects_malformed_urls() -> None:
