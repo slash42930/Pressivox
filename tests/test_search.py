@@ -8,8 +8,16 @@ from app.main import app
 
 client = TestClient(app)
 
+# Module-level cache so register+login only happens once per test session,
+# preventing the 5/minute rate limit on /auth/register from tripping.
+_cached_auth_headers: dict[str, str] | None = None
+
 
 def _auth_headers() -> dict[str, str]:
+    global _cached_auth_headers
+    if _cached_auth_headers is not None:
+        return _cached_auth_headers
+
     credentials = {
         "username": "test-user",
         "password": "test-pass-123",
@@ -22,10 +30,11 @@ def _auth_headers() -> dict[str, str]:
 
     assert login.status_code == 200
     token = login.json()["access_token"]
-    return {
+    _cached_auth_headers = {
         "Authorization": f"Bearer {token}",
         "X-Session-Id": "test-session",
     }
+    return _cached_auth_headers
 
 
 def test_search_endpoint_returns_rich_ui_metadata(monkeypatch) -> None:

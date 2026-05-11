@@ -7,7 +7,10 @@ from app.providers.tavily_provider import TavilySearchProvider
 
 
 def test_tavily_provider_drops_malformed_result_urls(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv('TAVILY_API_KEY', 'test-key')
+    # get_settings() is @lru_cache'd, so setenv has no effect on the already-
+    # cached Settings object.  Patch the attribute on the singleton directly.
+    from app.core.config import get_settings
+    monkeypatch.setattr(get_settings(), 'tavily_api_key', 'test-key')
 
     class _FakeClient:
         async def __aenter__(self):
