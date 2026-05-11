@@ -58,6 +58,9 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next) -> Response:
+    # Initialize view_rate_limit so slowapi's _inject_headers never raises AttributeError
+    # when _check_request_limit finds no matching limits for the endpoint.
+    request.state.view_rate_limit = None
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
